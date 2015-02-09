@@ -1,4 +1,4 @@
-application: otto
+application: otto-handin
 version: 1
 runtime: python27
 api_version: 1
@@ -13,4 +13,4 @@ libraries:
   version: "latest"
   
 env_variables:
-  DJANGO_SETTINGS_MODULE: 'otto-site.settings'
+  DJANGO_SETTINGS_MODULE: 'otto_site.settings'
