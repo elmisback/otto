@@ -17,24 +17,24 @@ class Submission(models.Model):
     comments = ndb.KeyProperty(kind=Comment, repeated=True)
 
 class Assignment(ndb.model):
-  title = ndb.StringProperty()
-  id_str = ndb.StringProperty()
-  due_date = ndb.DateTimeProperty()
-  date_created = ndb.DateTimeProperty(auto_now_add=True)
-  description = ndb.StringProperty()
-  changes = ndb.StringProperty(repeated=true)  ##probably want a list of changes
-  submissions = ndb.StructuredProperty(Submissions, repeated=True)
-  comments = ndb.StructuredProperty(Comment, repeated=True)  ##are we creating comment objects?
+    title = ndb.StringProperty()
+    id_str = ndb.StringProperty()
+    due_date = ndb.DateTimeProperty()
+    date_created = ndb.DateTimeProperty(auto_now_add=True)
+    description = ndb.StringProperty()
+    changes = ndb.StringProperty(repeated=true)  ##probably want a list of changes
+    submissions = ndb.StructuredProperty(Submissions, repeated=True)
+    comments = ndb.StructuredProperty(Comment, repeated=True)  ##are we creating comment objects?
 
 class Course(ndb.model):
-  title = ndb.StringProperty()
-  id_str = ndb.StringProperty()
-  assignments = ndb.StructuredProperty(Assignment, repeated=True)
-  users = ndb.UserProperty(repeated=True)
+    title = ndb.StringProperty()
+    id_str = ndb.StringProperty()
+    assignments = ndb.StructuredProperty(Assignment, repeated=True)
+    users = ndb.UserProperty(repeated=True)
 
 ##in case we want this
 class Comment(ndb.model):
-  date_posted = ndb.DateTimeProperty(auto_now_add=True)
-  message = ndb.StringProperty()
-  poster = ndb.UserProperty()
-  id_str = ndb.StringProperty()
+    date_posted = ndb.DateTimeProperty(auto_now_add=True)
+    message = ndb.StringProperty()
+    poster = ndb.UserProperty()
+    id_str = ndb.StringProperty()
