@@ -8,6 +8,14 @@ libraries:
 - name: django
   version: "1.4"
 
+handlers:
+- url: "/css"
+  static_dir: "templates/css"
+- url: "/js"
+  static_dir: "templates/js"
+- url: "/img"
+  static_dir: "templates/img"
+
 builtins:
 - django_wsgi: on
 
