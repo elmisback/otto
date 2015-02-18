@@ -96,7 +96,8 @@ LOGIN_URL = '/login'
 # Python dotted path to the WSGI application used by Django's runserver.
 # NOTE Removed because we're using Google App Engine
 
-TEMPLATE_DIRS = (
+from os.path import dirname, join
+TEMPLATE_DIRS = (join(dirname(dirname(__file__)), 'templates'),
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.

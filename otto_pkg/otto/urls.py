@@ -1,8 +1,9 @@
 from django.conf.urls.defaults import *
-from otto.views import index, login
+from otto.views import index, login, register
 
 urlpatterns = patterns('',
-                (r'^$', index),
-                (r'^/index$', index),
-                (r'^/login$', login),
+                url(r'^$', login),
+                url(r'^index$', index),
+                url(r'^login$', login),
+                url(r'^register$', register),
                 )

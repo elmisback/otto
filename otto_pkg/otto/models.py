@@ -1,11 +1,10 @@
 #from django.db import models
 from google.appengine.ext import ndb
 
-# Create your models here.
+# key: user.user_id
 class User(ndb.Model):
-    user_id = ndb.StringProperty()
     is_instructor = ndb.BooleanProperty()
-
+    courses = ndb.KeyProperty(kind="Course", repeated=True)
 
 #   if needed later  
 #class Student(User):
@@ -44,6 +43,8 @@ class Assignment(ndb.Model):
 
 class Course(ndb.Model):
     title = ndb.StringProperty()
-    id_str = ndb.StringProperty()
+    url_str = ndb.StringProperty()
     assignments = ndb.KeyProperty(kind=Assignment, repeated=True)
-    users = ndb.UserProperty(repeated=True)
+    students = ndb.KeyProperty(kind='User', repeated=True)
+    instructors = ndb.StringProperty(repeated=True)
+    notifications = ndb.KeyProperty(kind=Notification, repeated=True)

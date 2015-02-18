@@ -76,50 +76,24 @@
 					</div><!-- .row -->
 				</div><!-- .panel-heading -->
 				<div class="list-group">
-					<a href="#" class="list-group-item">
+                    {% for course in courses %}
+                    <a href="{{course.url_str}}" class="list-group-item">
 						<div class="row">
-							<div class="col-xs-2">768394</div>
-							<div class="col-xs-5"><span class="text-primary">Data Structures</span></div>
-							<div class="col-xs-2">Timothy James</div>
-							<div class="col-xs-2">86</div>
-							<div class="col-xs-1 text-right"><span class="badge">2</span></div>
+                            {#::before#}
+                            <div class="col-xs-2"></div>
+                            <div class="col-xs-5">
+                                <span class="text-primary">{{course.title}}</span>
+                            </div>
+                            <div class="col-xs-2">{{course.instructors|join:", " }}
+                            </div>
+                            <div class="col-xs-2">{{course.students|length}}
+                            </div>
+                            <div class="col-xs-1 text-right"><span class="badge">{{course.notifications|length}}</span>
+                            </div>
+                            {#::after#}
 						</div><!-- .row -->
-					</a><!-- .list-group-item -->
-					<a href="#" class="list-group-item">
-						<div class="row">
-							<div class="col-xs-2">182453</div>
-							<div class="col-xs-5"><span class="text-primary">Intermediate Programming Using Java</span></div>
-							<div class="col-xs-2">Wonsun Ahn</div>
-							<div class="col-xs-2">38</div>
-						</div><!-- .row -->
-					</a><!-- .list-group-item -->
-					<a href="#" class="list-group-item">
-						<div class="row">
-							<div class="col-xs-2">290540</div>
-							<div class="col-xs-5"><span class="text-primary">Computer Organization and Assembly Language</span></div>
-							<div class="col-xs-2">Kartik Mohanram</div>
-							<div class="col-xs-2">52</div>
-							<div class="col-xs-1 text-right"><span class="badge">1</span></div>
-						</div><!-- .row -->
-					</a><!-- .list-group-item -->
-					<a href="#" class="list-group-item">
-						<div class="row">
-							<div class="col-xs-2">551034</div>
-							<div class="col-xs-5"><span class="text-primary">Introduction to Systems Software</span></div>
-							<div class="col-xs-2">Jonathan Misurda</div>
-							<div class="col-xs-2">70</div>
-							<div class="col-xs-1 text-right"><span class="badge">5</span></div>
-						</div><!-- .row -->
-					</a><!-- .list-group-item -->
-					<a href="#" class="list-group-item">
-						<div class="row">
-							<div class="col-xs-2">323429</div>
-							<div class="col-xs-5"><span class="text-primary">Algorithm Implementation</span></div>
-							<div class="col-xs-2">Nicholas Farnan</div>
-							<div class="col-xs-2">44</div>
-							<div class="col-xs-1 text-right"><span class="badge">2</span></div>
-						</div><!-- .row -->
-					</a><!-- .list-group-item -->
+                    </a><!-- .list-group-item -->
+                    {% endfor %}
 				</div><!-- .list-group -->
 			</div><!-- .panel .panel-default -->
 			<div class="row">
@@ -140,16 +114,17 @@
 						<h4 class="modal-title" id="myModalLabel">Add New Course</h4>
 					</div><!-- .modal-header -->
 					<div class="modal-body">
-						<form method="post" action="/">
+						<form method="post" action="/index">{% csrf_token %}
 							<div class="form-group">
-                                <label for="{{add_box_name}}">Course ID</label>
-								<input name="identifier" type="email" class="form-control" id="courseID" placeholder="e.g. 574358">
+                                <label for="courseID">{{ add_dialog_name }}</label>
+                                <input name="courseID" type="text" class="form-control" id="courseID" placeholder="{{ placeholder }}">
 							</div>
-						</form>
+                            <!--</form>-->
 					</div><!-- .modal-body -->
 					<div class="modal-footer">
 						<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
 						<button type="submit" class="btn btn-success">Add Course</button>
+                        </form>{% csrf_token %}
 					</div><!-- .modal-footer -->
 				</div><!-- .modal-content -->
 			</div><!-- .model-dialog -->
