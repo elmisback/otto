@@ -72,6 +72,7 @@ def login(request):
 
 # TODO hack
 def get_new_course_id():
+    import time
     return str(int(time.time()))
 
 @login_required
@@ -97,9 +98,10 @@ def index(request):
             k = ndb.Key(Course, title, parent=user_key)
             course = k.get()
             if course is None:
-                course = Course(key=k, title=title, url_str=k.urlsafe(),
+                id_str = get_new_course_id()
+                course = Course(key=k, title=title, id_str=id_str,
                                 instructors=[user.nickname()])
-                logging.info('Created course with url_str={}'.format(k.urlsafe()))
+                logging.info('Created course with id_str={}'.format(id_str))
             else:
                 # Course already exists; probably this should create an error.
                 raise Exception(
@@ -107,17 +109,17 @@ def index(request):
 
         else:
             logging.info("...from a student")
-            url_str = request.POST['courseID']
-            k = ndb.Key(urlsafe=url_str) 
-            course = k.get()
-            if course is None:
-                raise Exception("Couldn't find the course.")
-            course.students.append(user_key)
-            for k_old in u.courses:
-                if k.url_str == k_old.url_str:
-                    # Course already exists; probably this should create an error.
-                    raise Exception('User error: course already exists, '
-                                    'handler not implemented.')
+            id_str = request.POST['courseID']
+            courses = [c for c in Course.query(Course.id_str == id_str)]
+            if len(courses) == 0:
+                logging.info('Found no courses matching the id.')
+            else:    
+                course = courses[0]
+                logging.info('Found course: {}'.format(course))
+                if course is None:
+                    raise Exception("Couldn't find the course.")
+                course.students.append(user_key)
+            k = course.key
 
         u.courses.append(k)
         course.put()
@@ -128,7 +130,7 @@ def index(request):
     logging.info([k.get() for k in u.courses])
     add_dialog_name = 'Course Name' if u.is_instructor else 'Course ID'
     placeholder = ('e.g. CS1520: Web Apps' if u.is_instructor 
-                    else 'e.g. agVoZWxsb3IPCxIHQWNjb3VudBiZiwIM')
+                    else 'e.g. 1234567890')
     template_dict = {'user_name': user.nickname(),
                     'logout_url': users.create_logout_url('/login'),
                     'add_dialog_name': add_dialog_name,

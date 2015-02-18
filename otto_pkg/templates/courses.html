@@ -77,10 +77,9 @@
 				</div><!-- .panel-heading -->
 				<div class="list-group">
                     {% for course in courses %}
-                    <a href="{{course.url_str}}" class="list-group-item">
+                    <a href="#" class="list-group-item">
 						<div class="row">
-                            {#::before#}
-                            <div class="col-xs-2"></div>
+                            <div class="col-xs-2">{{course.id_str}}</div>
                             <div class="col-xs-5">
                                 <span class="text-primary">{{course.title}}</span>
                             </div>
@@ -90,7 +89,6 @@
                             </div>
                             <div class="col-xs-1 text-right"><span class="badge">{{course.notifications|length}}</span>
                             </div>
-                            {#::after#}
 						</div><!-- .row -->
                     </a><!-- .list-group-item -->
                     {% endfor %}

@@ -43,7 +43,7 @@ class Assignment(ndb.Model):
 
 class Course(ndb.Model):
     title = ndb.StringProperty()
-    url_str = ndb.StringProperty()
+    id_str = ndb.StringProperty()
     assignments = ndb.KeyProperty(kind=Assignment, repeated=True)
     students = ndb.KeyProperty(kind='User', repeated=True)
     instructors = ndb.StringProperty(repeated=True)
