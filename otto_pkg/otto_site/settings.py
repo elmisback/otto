@@ -91,6 +91,8 @@ MIDDLEWARE_CLASSES = (
 
 ROOT_URLCONF = 'otto_site.urls'
 
+LOGIN_URL = '/login'
+
 # Python dotted path to the WSGI application used by Django's runserver.
 # NOTE Removed because we're using Google App Engine
 
