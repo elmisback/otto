@@ -77,7 +77,7 @@
 				</div><!-- .panel-heading -->
 				<div class="list-group">
                     {% for course in courses %}
-                    <a href="#" class="list-group-item">
+                    <a href="#{{course.id_str}}" class="list-group-item">
 						<div class="row">
                             <div class="col-xs-2">{{course.id_str}}</div>
                             <div class="col-xs-5">
@@ -107,12 +107,12 @@
 		<div class="modal fade" id="addNewCourseModal" tabindex="-1" role="dialog" aria-labelledby="addNewCourseModal" aria-hidden="true">
 			<div class="modal-dialog">
 				<div class="modal-content">
+                    <form method="post" action="/index">{% csrf_token %}
 					<div class="modal-header">
 						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 						<h4 class="modal-title" id="myModalLabel">Add New Course</h4>
 					</div><!-- .modal-header -->
 					<div class="modal-body">
-						<form method="post" action="/index">{% csrf_token %}
 							<div class="form-group">
                                 <label for="courseID">{{ add_dialog_name }}</label>
                                 <input name="courseID" type="text" class="form-control" id="courseID" placeholder="{{ placeholder }}">
@@ -122,8 +122,8 @@
 					<div class="modal-footer">
 						<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
 						<button type="submit" class="btn btn-success">Add Course</button>
-                        </form>{% csrf_token %}
 					</div><!-- .modal-footer -->
+                    </form>{% csrf_token %}
 				</div><!-- .modal-content -->
 			</div><!-- .model-dialog -->
 		</div><!-- .modal -->

@@ -118,6 +118,8 @@ def index(request):
                 logging.info('Found course: {}'.format(course))
                 if course is None:
                     raise Exception("Couldn't find the course.")
+                if user_key in course.students:
+                    raise Exception("You're already in that course.")
                 course.students.append(user_key)
             k = course.key
 
