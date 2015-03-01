@@ -1,3 +1,7 @@
+* {
+    -webkit-font-smoothing: antialiased;
+}
+
 body {
 	padding-top: 70px;
 }

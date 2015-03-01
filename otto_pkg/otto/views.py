@@ -1,15 +1,16 @@
-from django.http import HttpResponse
-from django.shortcuts import render_to_response, redirect
+import os
+import json
+import logging
 
-from google.appengine.ext.webapp import template
 from google.appengine.api import users
 from google.appengine.ext import ndb
-import logging
-import os
+
+from django.http import HttpResponse
+from django.shortcuts import render_to_response, redirect
+from django.core.context_processors import csrf
+
 from models import Course, User
 
-from django.core.context_processors import csrf
-from django.shortcuts import render_to_response
 
 def login_required(fn):
     def wrapper(request):
@@ -26,21 +27,20 @@ def login_required(fn):
         logging.info(fn.func_name)
         logging.info(request.method)
         return fn(request)
-    return wrapper 
+    return wrapper
+
 
 def render(template_name, template_dict=None):
-    if template_dict == None:
+    if template_dict is None:
         template_dict = {}
-    path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 
+    path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                         'templates/' + template_name)
-    #html = template.render(path, template_dict)
     response = render_to_response(path, template_dict)
     # Prevent post-signout access to data. TODO solve this problem for real
-    response['Cache-Control'] = 'no-cache, max-age=0, must-revalidate, no-store'
+    response['Cache-Control'] = ('no-cache, max-age=0,'
+                                 'must-revalidate, no-store')
     return response
-    #return render_to_response(path, template_dict)
 
-# Views
 
 def register(request):
     if request.method == "POST":
@@ -56,9 +56,10 @@ def register(request):
         key = ndb.Key(User, user.user_id())
         u = key.get()
         if u is None:
-            u = User(key=key, is_instructor=is_instructor, courses=[]) 
-            u.put() # store user in database
+            u = User(key=key, is_instructor=is_instructor, courses=[])
+            u.put()  # store user in database
         return redirect('/index')
+
 
 def login(request):
     user = users.get_current_user()
@@ -66,14 +67,80 @@ def login(request):
     if user:
         logging.info('Found a user with id {}'.format(user.user_id))
         return redirect('/index')
-    response = render('login.html', 
-                  {'login_url': users.create_login_url(request.path)})
+    response = render(
+            'login.html',
+            {'login_url': users.create_login_url(request.path)}
+    )
     return response
 
-# TODO hack
-def get_new_course_id():
+
+def generate_course_id():
     import time
     return str(int(time.time()))
+
+
+@login_required
+def courses(request):
+    logging.info('Received request for \'courses\' page...')
+    current_user = users.get_current_user()
+    user_key = ndb.Key(User, current_user.user_id())
+    user = user_key.get()
+    logging.info('Current user is {}.'.format(user))
+    if user.is_instructor:
+        logging.info('Request is from an instructor.')
+        if request.method == 'POST':
+            logging.info('There is a POST request.')
+            if request.POST['action'] == 'addCourse':
+                logging.info('Adding a new course...')
+                course_title = request.POST['course_title']
+                course_id = generate_course_id()
+                course_instructor = [current_user.nickname()]
+                course = Course({
+                    'title': course_title,
+                    'id_str': course_id,
+                    'instructors': course_instructor
+                })
+                course.put()
+                logging.info('Responding to client after course add...')
+                response = HttpResponse()
+                response.status_code = 200
+                response.content_type = 'application/json'
+                response.content = json.dumps({
+                    'course_id': course_id,
+                    'course_title': course_title
+                })
+                return response
+            elif request.POST['action'] == 'removeCourse':
+                logging.info('Recevied request to delete course...')
+                course_id = request.POST['course_id']
+                course_key = ndb.Key(Course, course_id, parent=user_key)
+                course_key.delete()
+                # if course_key is not None:
+                #     course_key.delete()
+                #     logging.info('Course has been deleted...')
+                # response = HttpResponse()
+                # response.status_code = 200
+                # response.content_type = 'application/json'
+                # response.content = 'success'
+                # return response
+        else:
+            pass
+    else:
+        pass
+    logging.info([key.get() for key in user.courses])
+    add_dialog_name = 'Course Name' if user.is_instructor else 'Course ID'
+    placeholder = ('e.g. Data Structures' if user.is_instructor
+                   else 'e.g. 1234567890')
+    template_dict = {
+            'user_name': current_user.nickname(),
+            'logout_url': users.create_logout_url('/login'),
+            'add_dialog_name': add_dialog_name,
+            'placeholder': placeholder,
+            'courses': [key.get() for key in user.courses]
+    }
+    template_dict.update(csrf(request))
+    return render('courses.html', template_dict)
+
 
 @login_required
 def index(request):
@@ -84,12 +151,7 @@ def index(request):
     logging.info('request.method={}'.format(request.method))
     logging.info("User's courses are: {}".format([k.get() for k in u.courses]))
     logging.info("u.courses={}".format(u.courses))
-    #return render('login.html', {'login_url': users.create_login_url('index/')})
-    #logging.info('User is {}'.format(request.user))
-    #if not user:
-    #    return render('login.html')
-    if request.method == "POST": # Handle updates to data model.
-                                 # Maybe move to a "controller" function?
+    if request.method == "POST":
         logging.info("It's a post request")
         if u.is_instructor:
             logging.info("...from an instructor")
@@ -98,7 +160,7 @@ def index(request):
             k = ndb.Key(Course, title, parent=user_key)
             course = k.get()
             if course is None:
-                id_str = get_new_course_id()
+                id_str = generate_course_id()
                 course = Course(key=k, title=title, id_str=id_str,
                                 instructors=[user.nickname()])
                 logging.info('Created course with id_str={}'.format(id_str))
@@ -113,7 +175,7 @@ def index(request):
             courses = [c for c in Course.query(Course.id_str == id_str)]
             if len(courses) == 0:
                 logging.info('Found no courses matching the id.')
-            else:    
+            else:
                 course = courses[0]
                 logging.info('Found course: {}'.format(course))
                 if course is None:
@@ -131,13 +193,14 @@ def index(request):
     # Basic response.
     logging.info([k.get() for k in u.courses])
     add_dialog_name = 'Course Name' if u.is_instructor else 'Course ID'
-    placeholder = ('e.g. CS1520: Web Apps' if u.is_instructor 
-                    else 'e.g. 1234567890')
-    template_dict = {'user_name': user.nickname(),
-                    'logout_url': users.create_logout_url('/login'),
-                    'add_dialog_name': add_dialog_name,
-                    'placeholder': placeholder,
-                    'courses': [k.get() for k in u.courses],
-                    }
+    placeholder = ('e.g. Data Structures' if u.is_instructor
+                   else 'e.g. 1234567890')
+    template_dict = {
+            'user_name': user.nickname(),
+            'logout_url': users.create_logout_url('/login'),
+            'add_dialog_name': add_dialog_name,
+            'placeholder': placeholder,
+            'courses': [k.get() for k in u.courses]
+    }
     template_dict.update(csrf(request))
     return render('courses.html', template_dict)
