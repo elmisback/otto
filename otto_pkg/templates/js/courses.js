@@ -32,6 +32,7 @@ jQuery(document).ready(function($){
             newRow.attr('id', 'course-' + data.course_id);
             courseNone.addClass('hidden');
             courseNone.before(newRow);
+            $('input[name="course_title"]', form).val('');
             actionButton.button('reset');
             modal.modal('hide');
         });
