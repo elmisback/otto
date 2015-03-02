@@ -58,7 +58,7 @@ def register(request):
         if u is None:
             u = User(key=key, is_instructor=is_instructor, courses=[])
             u.put()  # store user in database
-        return redirect('/index')
+        return redirect('/courses')
 
 
 def login(request):
@@ -66,7 +66,7 @@ def login(request):
     logging.info('Running login()')
     if user:
         logging.info('Found a user with id {}'.format(user.user_id))
-        return redirect('/index')
+        return redirect('/courses')
     response = render(
         'login.html',
         {'login_url': users.create_login_url(request.path)}
@@ -77,6 +77,11 @@ def login(request):
 def generate_course_id():
     import time
     return str(int(time.time()))
+
+
+# TODO: find best way to select first course in query
+def get_course_by_id(id):
+    return [course for course in Course.query(Course.id_str == id)][0]
 
 
 @login_required
@@ -116,10 +121,9 @@ def courses(request):
                 course_id = request.POST['course_id']
                 logging.info('POST request to remove course with ID {}.'
                              .format(course_id))
-                courses = [course for course in
-                           Course.query(Course.id_str == course_id)]
-                courses[0].key.delete()
-                user.courses.remove(courses[0].key)
+                course = get_course_by_id(course_id)
+                course.key.delete()
+                user.courses.remove(course.key)
                 user.put()
                 if request.POST['ajax']:  # AJAX call only needs confirmation
                     logging.info('Responding to client with confirmation.')
@@ -128,22 +132,39 @@ def courses(request):
                     return response
         else:
             logging.info('We are processing a normal page request.')
+        template = 'courses_instructor.html'
     else:
         logging.info('Current user is a student.')
-    logging.info([key.get() for key in user.courses])
-    add_dialog_name = 'Course Name' if user.is_instructor else 'Course ID'
-    placeholder = ('e.g. Data Structures' if user.is_instructor
-                   else 'e.g. 1234567890')
+        if request.method == 'POST':
+            logging.info('We are processing a POST request.')
+            if request.POST['action'] == 'joinCourse':
+                course_id = request.POST['course_id']
+                course = get_course_by_id(course_id)
+                user.courses.append(course.key)
+                user.put()
+                course_title = course.title
+                if request.POST['ajax']:
+                    logging.info('Responding to client with new course.')
+                    response = HttpResponse()
+                    response.status_code = 200
+                    response.content_type = 'application/json'
+                    response.content = json.dumps({
+                        'course_id': course_id,
+                        'course_title': course_title,
+                        'course_url': '#'  # needs replaced with actual url
+                    })
+                    return response
+            else:
+                pass
+        template = 'courses_student.html'
     template_dict = {
         'user_name': current_user.nickname(),
         'logout_url': users.create_logout_url('/login'),
-        'add_dialog_name': add_dialog_name,
-        'placeholder': placeholder,
         'courses': [key.get(use_cache=False, use_memcache=False)
                     for key in user.courses]
     }
     template_dict.update(csrf(request))
-    return render('courses_instructor.html', template_dict)
+    return render(template, template_dict)
 
 
 @login_required
