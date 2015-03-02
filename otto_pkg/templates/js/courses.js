@@ -27,6 +27,7 @@ jQuery(document).ready(function($){
             $('.attr-course-name', newRow).html('<a href="' + data.course_url + '" title="' + data.course_title + '">' + data.course_title + '</a>');
             $('.attr-course-enrolled, .attr-course-pending', newRow).text('0');
             $('.attr-course-remove', newRow).removeClass('hidden');
+            $('.attr-course-remove button', newRow).data('course-id', data.course_id);
             newRow.removeClass('course-none hidden');
             newRow.attr('id', 'course-' + data.course_id);
             courseNone.addClass('hidden');
