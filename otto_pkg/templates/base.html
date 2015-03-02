@@ -58,7 +58,21 @@
             </div><!-- .container -->
         </nav><!-- .navbar .navbar-default -->
 
-        {% block body %}{% endblock %}
+        <div class="container">
+            <ol class="breadcrumb">
+                <li><a href="#">Home</a></li>
+                <li class="active">Courses</li>
+            </ol><!-- .breadcrumb -->
+            {% block body %}{% endblock %}
+            <div class="row">
+                <div class="col-xs-12">
+                    <footer class="site-footer">
+                        <small class="text-muted pull-left">&copy; 2015 <a href="index.html">Otto</a>.</small>
+                        <small class="text-muted pull-right">Project by Alex Pascal, Edward Misback, and Ben Pratt.</small>
+                    </footer>
+                </div>
+            </div><!-- .row -->
+        </div><!-- .container -->
         
         <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>

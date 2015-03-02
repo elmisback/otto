@@ -68,8 +68,8 @@ def login(request):
         logging.info('Found a user with id {}'.format(user.user_id))
         return redirect('/index')
     response = render(
-            'login.html',
-            {'login_url': users.create_login_url(request.path)}
+        'login.html',
+        {'login_url': users.create_login_url(request.path)}
     )
     return response
 
@@ -81,65 +81,69 @@ def generate_course_id():
 
 @login_required
 def courses(request):
-    logging.info('Received request for \'courses\' page...')
+    logging.info('Processing request for courses page.')
     current_user = users.get_current_user()
     user_key = ndb.Key(User, current_user.user_id())
     user = user_key.get()
     logging.info('Current user is {}.'.format(user))
     if user.is_instructor:
-        logging.info('Request is from an instructor.')
+        logging.info('Current user is an instructor.')
         if request.method == 'POST':
-            logging.info('There is a POST request.')
+            logging.info('We are processing a POST request.')
             if request.POST['action'] == 'addCourse':
-                logging.info('Adding a new course...')
                 course_title = request.POST['course_title']
+                logging.info('POST request to add a course with title {}.'
+                             .format(course_title))
                 course_id = generate_course_id()
                 course_instructor = [current_user.nickname()]
-                course = Course({
-                    'title': course_title,
-                    'id_str': course_id,
-                    'instructors': course_instructor
-                })
+                course = Course(title=course_title, id_str=course_id,
+                                instructors=course_instructor)
                 course.put()
-                logging.info('Responding to client after course add...')
-                response = HttpResponse()
-                response.status_code = 200
-                response.content_type = 'application/json'
-                response.content = json.dumps({
-                    'course_id': course_id,
-                    'course_title': course_title
-                })
-                return response
+                user.courses.append(course.key)
+                user.put()
+                if request.POST['ajax']:  # AJAX calls only needs new course
+                    logging.info('Responding to client with new course.')
+                    response = HttpResponse()
+                    response.status_code = 200
+                    response.content_type = 'application/json'
+                    response.content = json.dumps({
+                        'course_id': course_id,
+                        'course_title': course_title,
+                        'course_url': '#'  # needs replaced with actual url
+                    })
+                    return response
             elif request.POST['action'] == 'removeCourse':
-                logging.info('Recevied request to delete course...')
                 course_id = request.POST['course_id']
-                course_key = ndb.Key(Course, course_id, parent=user_key)
-                course_key.delete()
-                # if course_key is not None:
-                #     course_key.delete()
-                #     logging.info('Course has been deleted...')
-                # response = HttpResponse()
-                # response.status_code = 200
-                # response.content_type = 'application/json'
-                # response.content = 'success'
-                # return response
+                logging.info('POST request to remove course with ID {}.'
+                             .format(course_id))
+                courses = [course for course in
+                           Course.query(Course.id_str == course_id)]
+                courses[0].key.delete()
+                user.courses.remove(courses[0].key)
+                user.put()
+                if request.POST['ajax']:  # AJAX call only needs confirmation
+                    logging.info('Responding to client with confirmation.')
+                    response = HttpResponse()
+                    response.status_code = 200
+                    return response
         else:
-            pass
+            logging.info('We are processing a normal page request.')
     else:
-        pass
+        logging.info('Current user is a student.')
     logging.info([key.get() for key in user.courses])
     add_dialog_name = 'Course Name' if user.is_instructor else 'Course ID'
     placeholder = ('e.g. Data Structures' if user.is_instructor
                    else 'e.g. 1234567890')
     template_dict = {
-            'user_name': current_user.nickname(),
-            'logout_url': users.create_logout_url('/login'),
-            'add_dialog_name': add_dialog_name,
-            'placeholder': placeholder,
-            'courses': [key.get() for key in user.courses]
+        'user_name': current_user.nickname(),
+        'logout_url': users.create_logout_url('/login'),
+        'add_dialog_name': add_dialog_name,
+        'placeholder': placeholder,
+        'courses': [key.get(use_cache=False, use_memcache=False)
+                    for key in user.courses]
     }
     template_dict.update(csrf(request))
-    return render('courses.html', template_dict)
+    return render('courses_instructor.html', template_dict)
 
 
 @login_required
