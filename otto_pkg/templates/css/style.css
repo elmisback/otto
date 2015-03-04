@@ -9,3 +9,15 @@ body {
 .site-footer {
 	margin-top: 50px;
 }
+
+.course-list .course:last-of-type {
+    display: none;
+}
+
+.course-list .course-none:only-of-type {
+    display: block;
+}
+
+.course-list .course-none .attr-course-delete {
+    display: none;
+}

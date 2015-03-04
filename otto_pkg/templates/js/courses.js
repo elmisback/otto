@@ -1,59 +1,65 @@
 jQuery(document).ready(function($){
 
-    $('#createNewCourseModal').on('shown.bs.modal', function(){
+    $('#createCourseModal, #joinCourseModal').on('shown.bs.modal', function(){
         $('input[name="course_title"]', this).focus();
+        $('input[name="course_id"]', this).focus();
     });
 
-    $('#deleteCourseModal').on('shown.bs.modal', function(e){
+    $('#deleteCourseModal, #leaveCourseModal').on('show.bs.modal', function(e){
         var target = $(e.relatedTarget);
-        this.caller = target.closest('.course');
-        var courseID = target.data('course-id');
-        $('input[name="course_id"]', this).val(courseID);
+        var targetRow = target.closest('.row');
+        $('.course-title', this).text(targetRow.find('.attr-course-name').text());
+        $('input[name="course_id"]', this).val(targetRow.find('.attr-course-id div').text());
     });
 
-    $('#createNewCourseForm').submit(function(){
+    $('#createCourseModal form, #joinCourseModal form').submit(function(){
         var form = $(this);
         $('input[name="ajax"]', form).val(true);
         var formData = form.serialize();
-        var courseNone = $('.course-none');
-        var modal = form.closest('.modal');
         var actionButton = form.find('input[type="submit"]');
-        var courseList = $('.course-list');
         actionButton.button('loading');
-        var response = $.post('/courses', formData).success(function(response){
+        var response = $.post('/courses', formData).done(function(response){
             var data = $.parseJSON(response);
-            var newRow = $('.course-list .course:first-of-type').clone(true);
-            $('.attr-course-id', newRow).html('<div>' + data.course_id + '</div>');
-            $('.attr-course-name', newRow).html('<a href="' + data.course_url + '" title="' + data.course_title + '">' + data.course_title + '</a>');
-            $('.attr-course-enrolled, .attr-course-pending', newRow).text('0');
-            $('.attr-course-remove', newRow).removeClass('hidden');
-            $('.attr-course-remove button', newRow).data('course-id', data.course_id);
-            newRow.removeClass('course-none hidden');
-            newRow.attr('id', 'course-' + data.course_id);
-            courseNone.addClass('hidden');
-            courseNone.before(newRow);
-            $('input[name="course_title"]', form).val('');
-            actionButton.button('reset');
-            modal.modal('hide');
+            if (data.success) {
+                var newRow = $('.course-list .course').eq(0).clone(true).removeClass('course-none').attr('id', 'course-' + data.course_id).hide();
+                $('.attr-course-id', newRow).html('<div>' + data.course_id + '</div>');
+                $('.attr-course-name', newRow).html('<a href="' + data.course_url + '" title="' + data.course_title + '">' + data.course_title + '</a>');
+                $('.attr-course-instructor', newRow).text(data.course_instructors);
+                $('.attr-course-status', newRow).text(data.course_status);
+                $('.attr-course-assignments', newRow).text(data.course_assignments);
+                $('.attr-course-enrolled, .attr-course-pending', newRow).text('0');
+                $('.course-none').before(newRow);
+                newRow.slideToggle(300);
+                $('input[name="course_title"]', form).val('');
+                $('input[name="course_id"]', form).val('');
+                $('.alert', form).remove();
+                actionButton.button('reset');
+                form.closest('.modal').modal('hide');
+            } else {
+                var alert = $('.modal-body .alert', form);
+                if (alert.length > 0) {
+                    alert.text(data.message);
+                } else {
+                    $('.modal-body', form).append('<div class="alert alert-danger" role="alert">' + data.message + '</div>').show();
+                }
+            }
         });
         return false;
     });
 
-    $('#deleteCourseForm').submit(function(){
+    $('#deleteCourseModal form, #leaveCourseModal form').submit(function(){
         var form = $(this);
         $('input[name="ajax"]', form).val(true);
         var formData = form.serialize();
-        var modal = form.closest('.modal');
         var actionButton = form.find('input[type="submit"]');
         actionButton.button('loading');
-        var response = $.post('/courses', formData).success(function(response){
-            var target = $('input[name="course_id"]').val();
-            $('#course-' + target).remove();
-            if ( $('.course-list .course').length < 2 ) {
-                $('.course-none').removeClass('hidden');
-            }
+        var response = $.post('/courses', formData).done(function(response){
+            var target = $('input[name="course_id"]', form).val();
+            $('#course-' + target).slideToggle(300, function(){
+                $(this).remove();
+            });
             actionButton.button('reset');
-            modal.modal('hide');
+            form.closest('.modal').modal('hide');
         });
         return false;
     });
