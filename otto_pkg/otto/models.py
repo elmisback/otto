@@ -93,7 +93,7 @@ class Course(ndb.Model):
             'course_enrolled': len(self.students_enrolled),
             'course_pending': len(self.students_pending),
             'course_instructors': ', '.join(self.instructors),
-            'course_url': '#'
+            'course_url': 'courses/{}'.format(self.id_str)
         }
 
     def get_object_with_status(self, student):

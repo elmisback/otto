@@ -2,8 +2,14 @@
 
 {% block body %}
 
+<ol class="breadcrumb">
+    <li><a href="#">Home</a></li>
+    {% for crumb in breadcrumb %}
+        <li {% if forloop.last %}class="active"{% endif %}>{{ crumb }}</li>
+    {% endfor %}
+</ol><!-- .breadcrumb -->
 <div class="page-header">
-    <h1>Courses <button type="button" class="btn btn-success pull-right" data-toggle="modal" data-target="#createCourseModal">Create Course</button></h1>
+    <h2>Courses <button type="button" class="btn btn-success pull-right" data-toggle="modal" data-target="#createCourseModal">Create Course</button></h2>
 </div><!-- .page-header -->
 <div class="panel panel-default">
     <div class="panel-heading">

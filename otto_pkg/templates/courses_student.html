@@ -3,7 +3,13 @@
 {% block body %}
 
 <div class="page-header">
-    <h1>Courses <button type="button" class="btn btn-success pull-right" data-toggle="modal" data-target="#joinCourseModal">Join Course</button></h1>
+    <ol class="breadcrumb site-breadcrumb">
+        <li><a href="#">Home</a></li>
+        {% for crumb in breadcrumb %}
+            <li {% if forloop.last %}class="active"{% endif %}>{{ crumb }}</li>
+        {% endfor %}
+    </ol><!-- .breadcrumb -->
+    <h2>Courses <button type="button" class="btn btn-success pull-right" data-toggle="modal" data-target="#joinCourseModal">Join Course</button></h2>
 </div><!-- .page-header -->
 <div class="panel panel-default">
     <div class="panel-heading">

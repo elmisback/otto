@@ -81,6 +81,22 @@ def generate_course_id():
 
 
 @login_required
+def course(request):
+    logging.info('Processing request for course ID {} page.'.format(course_id))
+    current_user = users.get_current_user()
+    user_key = ndb.Key(User, current_user.user_id())
+    user = user_key.get()
+    logging.info('Current user is {}.'.format(current_user.nickname()))
+    data = {
+        'user': user,
+        'user_name': current_user.nickname(),
+        'logout_url': users.create_logout_url('/login'),
+        'breadcrumb': ['Courses', 'Course']
+    }
+    return render('course.html', data)
+
+
+@login_required
 def courses(request):
     logging.info('Processing request for courses page.')
     current_user = users.get_current_user()
@@ -194,7 +210,8 @@ def courses(request):
         'user': user,
         'user_name': current_user.nickname(),
         'logout_url': users.create_logout_url('/login'),
-        'courses': courses
+        'courses': courses,
+        'breadcrumb': {'Courses'}
     }
     data.update(csrf(request))
     return render(template, data)
