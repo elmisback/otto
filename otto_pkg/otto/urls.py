@@ -1,8 +1,10 @@
 from django.conf.urls.defaults import *
-from otto.views import index, login
+import views
 
-urlpatterns = patterns('',
-                (r'^$', index),
-                (r'^/index$', index),
-                (r'^/login$', login),
-                )
+urlpatterns = patterns(
+    '',
+    url(r'^$', views.login),
+    url(r'^courses$', views.courses),
+    url(r'^login$', views.login),
+    url(r'^register$', views.register),
+)
