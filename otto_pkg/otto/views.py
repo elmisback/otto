@@ -2,20 +2,20 @@ import os
 import json
 import logging
 
-from google.appengine.api import users
+from google.appengine.api.users import *
 from google.appengine.ext import ndb
+from google.appengine.ext import db
 
 from django.http import HttpResponse
 from django.shortcuts import render_to_response, redirect
 from django.core.context_processors import csrf
 
-from models import Course, User
-
+from models import *
 
 def login_required(fn):
     def wrapper(request):
         logging.info('Running login_required()')
-        user = users.get_current_user()
+        user = get_current_user()
         if not user:
             logging.info('User not found.')
             return login(request)
@@ -29,7 +29,6 @@ def login_required(fn):
         return fn(request)
     return wrapper
 
-
 def render(template_name, template_dict=None):
     if template_dict is None:
         template_dict = {}
@@ -41,10 +40,9 @@ def render(template_name, template_dict=None):
                                  'must-revalidate, no-store')
     return response
 
-
 def register(request):
     if request.method == "POST":
-        user = users.get_current_user()
+        user = get_current_user()
         logging.info("Registering user!")
         # Handle user creation and redirect to the index.
         if 'instructor' in request.POST:
@@ -60,30 +58,45 @@ def register(request):
             u.put()  # store user in database
         return redirect('/courses')
 
-
 def login(request):
-    user = users.get_current_user()
+    user = get_current_user()
     logging.info('Running login()')
     if user:
         logging.info('Found a user with id {}'.format(user.user_id))
         return redirect('/courses')
     response = render(
         'login.html',
-        {'login_url': users.create_login_url(request.path)}
+        {'login_url': create_login_url(request.path)}
     )
     return response
 
+@ndb.transactional(xg=True)
+def _create_course(title):
+    digits = 8
+    course = Course(title=title, id=Course.generate_id(digits),
+                    instructors=[get_current_user().nickname()])
+    course.put()
+    return course
 
-# TODO: find a rock solid way to generate a unique ID
-def generate_course_id():
-    from random import randint
-    return ''.join(['%s' % randint(0, 9) for i in xrange(10)])
-
+def create_course(title):
+    """Creates a course named title.
+    
+    Using a transaction guarantees we will never generate two courses with the 
+    same ID. 
+    """
+    course = None
+    while course is None:
+        try:
+            course = _create_course(title)
+        except db.TransactionFailedError:
+            pass
+    
+    return course
 
 @login_required
 def courses(request):
     logging.info('Processing request for courses page.')
-    current_user = users.get_current_user()
+    current_user = get_current_user()
     user_key = ndb.Key(User, current_user.user_id())
     user = user_key.get()
     logging.info('Current user is {}.'.format(current_user.nickname()))
@@ -104,11 +117,18 @@ def courses(request):
                                     'one character.')
                     })
                     return response
-                course_id = generate_course_id()
-                course_instructor = [current_user.nickname()]
-                course = Course(title=course_title, id_str=course_id,
-                                instructors=course_instructor)
-                course.put()
+                try:
+                    course = create_course(course_title)
+                except IDTimeout:
+                    response = HttpResponse()
+                    response.content_type = 'application/json'
+                    response.content = json.dumps({
+                        'success': False,
+                        'message': ("Sorry! We don't have space to add more "
+                                    "courses right now. Please try again "
+                                    "later.")
+                    })
+                    return response
                 user.add_course(course)
                 user.put()
                 if request.POST['ajax']:  # AJAX calls only needs new course
@@ -193,7 +213,7 @@ def courses(request):
     data = {
         'user': user,
         'user_name': current_user.nickname(),
-        'logout_url': users.create_logout_url('/login'),
+        'logout_url': create_logout_url('/login'),
         'courses': courses
     }
     data.update(csrf(request))
