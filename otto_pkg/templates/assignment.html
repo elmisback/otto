@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+<!-- TODO Breacrumb -->
+
+<div class="page-header">
+    <h1> Assignment Name Here <!--{{ assignment.title }}-->
+    {% if user.is_instructor %}
+        <button type="button" class="btn btn-success pull-right" data-toggle="modal" data-target="#editAssignmentModal">Edit Assignment</button>
+    {% elif not user.is_instructor %}
+        <button type="button" class="btn btn-success pull-right" data-toggle="modal" data-target="#submitAssignmentModal">Submit</button>
+    {% endif %}
+    </h1>
+    <br>
+    <h2>Due: Due Date Here </h2> <!--{{ assignment.due_date }}-->
+</div><!-- .page-header -->
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <div class="row">
+            <div class="col-xs-12"><h3>Assignment Description</h3></div> <!-- Can change or get rid of this -->
+        </div><!-- .row -->
+    </div><!-- .panel-heading -->
+    <div class="list-group assignment-list">
+        <div class="list-group-item assignment" id="assignment-{{ assignment.title }}">
+            <div class="row">
+                <div class="col-xs-12 attr-assignment-description">
+                    <div> This is where the description for assignment 1 wil go.</div> <!--{{ assignment.assignment_description }}-->
+                </div><!-- .attr-assignment-description -->
+            </div><!-- .row -->
+        </div><!-- .list-group-item .assignment -->
+    </div><!-- .list-group -->
+</div><!-- .panel .panel-default -->
+
+
+
+<div class="modal fade" id="editAssignmentModal" tabindex="-1" role="dialog" aria-labelledby="editAssignmentModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="/assignment">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">Edit Assignment</h4>
+                </div><!-- .modal-header -->
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="assignment_title">Assignment Name</label>
+                        <input name="assignment_title" type="text" class="form-control" placeholder="e.g. Assignment #2" required> <!--value = {{ assignment.name }}-->
+                    </div><!-- .form-group -->
+                    <div class="form-group">
+                        <label for="assignment_due_date">Due Date</label>
+                        <input name="assignment_due_date" type="date" class="form-control" placeholder="e.g. 3/18/15" required> <!--value = {{ assignment.due_date }}--> 
+                    </div><!-- .form-group -->
+                    <div class="form-group">
+                        <label for="assignment_description">Description</label>
+                        <textarea name="assignment_description" type="text" class="form-control" required></textarea> <!--value = {{ assignment.description }}-->
+                    </div><!-- .form-group -->
+                    
+                    <input name="action" type="hidden" value="editAssignment">
+                    <input name="ajax" type="hidden">
+                </div><!-- .modal-body -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default pull-left" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" data-loading-text="Creating...">Finish</button>
+                </div><!-- .modal-footer -->
+            </form>
+        </div><!-- .modal-content -->
+    </div><!-- .model-dialog -->
+</div><!-- .modal -->
+
+<div class="modal fade" id="submitAssignmentModal" tabindex="-1" role="dialog" aria-labelledby="submitAssignmentModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="/assignment">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">Submit Assignment</h4>
+                </div><!-- .modal-header -->
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="submission_name">Name</label>
+                        <input name="submission_name" type="text" class="form-control" placeholder="e.g. John Smith" required>
+                    </div><!-- .form-group -->
+                    <div class="form-group">
+                        <label for="submission_body">Submission</label>
+                         <input name="submission_body" type="file" class="form-control" required>
+                    </div><!-- .form-group -->
+                    <div class="form-group">
+                        <label for="submission_comments">Comments</label>
+                         <textarea name="submission_comments" type="text" class="form-control"></textarea>
+                    </div><!-- .form-group -->
+                    
+                    <input name="action" type="hidden" value="submitAssignment">
+                    <input name="ajax" type="hidden">
+                </div><!-- .modal-body -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default pull-left" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" data-loading-text="Creating...">Finish</button>
+                </div><!-- .modal-footer -->
+            </form>
+        </div><!-- .modal-content -->
+    </div><!-- .model-dialog -->
+</div><!-- .modal -->
+
+
+{% endblock %}

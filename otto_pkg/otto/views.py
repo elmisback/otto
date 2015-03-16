@@ -58,7 +58,8 @@ def register(request):
         if u is None:
             u = User(key=key, is_instructor=is_instructor, courses=[])
             u.put()  # store user in database
-        return redirect('/courses')
+        #return redirect('/courses')
+        return redirect('/assignment')
 
 
 def login(request):
@@ -66,7 +67,8 @@ def login(request):
     logging.info('Running login()')
     if user:
         logging.info('Found a user with id {}'.format(user.user_id))
-        return redirect('/courses')
+        #return redirect('/courses')
+        return redirect('/assignment')
     response = render(
         'login.html',
         {'login_url': users.create_login_url(request.path)}
@@ -198,3 +200,22 @@ def courses(request):
     }
     data.update(csrf(request))
     return render(template, data)
+
+#Needs to be fleshed out, just basic implementation for testing front end
+#Modified register and login to redirect to assignment, change back when done
+@login_required
+def assignment(request):
+    logging.info('Processing request for assignment page')
+    current_user = users.get_current_user()
+    user_key = ndb.Key(User, current_user.user_id())
+    user = user_key.get()
+    logging.info('Current user is {}.'.format(current_user.nickname()))
+    template = 'assignment.html'
+    data = {
+        'user': user,
+        'user_name': current_user.nickname(),
+        'logout_url': users.create_logout_url('/login'),
+        'assignment': assignment
+    }
+    return render(template, data)
+    
