@@ -1,0 +1,21 @@
+<div class="page-header clearfix">
+    <h2 class="page-title">
+        {% with breadcrumb|last as current_page %}
+            {{ current_page.0 }}
+        {% endwith %}
+        {% if user.is_instructor %}
+            <a href="{{ assignments_url }}" class="btn btn-success pull-right">Save Assignment</a>
+            <a href="{{ assignments_url }}" class="btn btn-default pull-right">Discard</a>
+        {% endif %}
+    </h2><!-- .page-title -->
+</div><!-- .page-header -->
+<form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="assignment-title">Assignment Title</label>
+        <input type="text" name="assignment-title" class="form-control" placeholder="e.g. Assignment 1">
+    </div><!-- .form-group -->
+    <div class="form-group">
+        <button type="submit" class="btn btn-success">Save Assignment</button>
+    </div><!-- .form-group -->
+</form><!-- .form-horizontal -->

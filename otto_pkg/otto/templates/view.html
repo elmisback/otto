@@ -1,0 +1,15 @@
+<div class="container view-container">
+    <div class="page-header">
+        <ol class="breadcrumb site-breadcrumb">
+            <li><a href="/" title="Permalink to Otto">Otto</a></li>
+            {% for crumb in breadcrumb %}
+                {% if forloop.last %}
+                    <li><span class="active">{{ crumb.0 }}</span></li>
+                {% else %}
+                    <li><a href="{{ crumb.1 }}" title="Permalink to {{ crumb.0 }}">{{ crumb.0 }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </div><!-- .page-header -->
+    {% include view_template %}
+</div><!-- .container -->

@@ -23,12 +23,12 @@
                 <h1>I am</h1>
             </div>
             <div class="col-md-6">
-                <form method="post" action="/register">{% csrf_token %}
+                <form method="post" action="/register/">{% csrf_token %}
                 <div class="form-group">
                     <button class="btn btn-success" name="instructor" type="submit" value="1">an instructor.</button>
                 </div>
                 </form>
-                <form method="post" action="/register">{% csrf_token %}
+                <form method="post" action="/register/">{% csrf_token %}
                 <div class="form-group">
                     <button name="student" class="btn btn-success" type="submit" value="1">a student.</button>
                 </div>

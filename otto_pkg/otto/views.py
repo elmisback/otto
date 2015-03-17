@@ -1,217 +1,395 @@
-import os
 import json
 import logging
 
-from google.appengine.api import users
+from google.appengine.api.users import *
 from google.appengine.ext import ndb
 
 from django.http import HttpResponse
-from django.shortcuts import render_to_response, redirect
-from django.core.context_processors import csrf
+from django.shortcuts import render, redirect
+from django.core.urlresolvers import reverse
 
-from models import Course, User
+from models import *
 
 
+# Verifies that the user logged in before proceeding to view.
 def login_required(fn):
-    def wrapper(request):
-        logging.info('Running login_required()')
-        user = users.get_current_user()
-        if not user:
-            logging.info('User not found.')
+    def wrapper(request, **kwargs):
+        logging.info('Verifying if user is logged in.')
+        current_user = get_current_user()
+        if not current_user:
+            logging.info('User is not logged in.')
             return login(request)
-        logging.info('User is logged in... checking for registration.')
-        key = ndb.Key(User, user.user_id())
-        u = key.get()
-        if u is None:
-            return render('register.html', csrf(request))
-        logging.info(fn.func_name)
-        logging.info(request.method)
-        return fn(request)
+        logging.info('User is logged in. Checking for previous history.')
+        user_key = ndb.Key(User, current_user.user_id())
+        user = user_key.get()
+        if user is None:
+            logging.info('User has not logged in before. Registering...')
+            return render(request, 'register.html')
+        return fn(request, **kwargs)
     return wrapper
 
 
-def render(template_name, template_dict=None):
-    if template_dict is None:
-        template_dict = {}
-    path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                        'templates/' + template_name)
-    response = render_to_response(path, template_dict)
-    # Prevent post-signout access to data. TODO solve this problem for real
-    response['Cache-Control'] = ('no-cache, max-age=0,'
-                                 'must-revalidate, no-store')
-    return response
-
-
+# Registers a first time user either as an instructor or a student.
 def register(request):
-    if request.method == "POST":
-        user = users.get_current_user()
-        logging.info("Registering user!")
-        # Handle user creation and redirect to the index.
+    if request.method == 'POST':
+        current_user = get_current_user()
+        logging.info('Registering a new user as instructor or student.')
         if 'instructor' in request.POST:
             is_instructor = True
-            logging.info('Adding new instructor!')
-        elif 'student' in request.POST:
+            logging.info('Registering a new instructor.')
+        else:
             is_instructor = False
-            logging.info('Adding new student!')
-        key = ndb.Key(User, user.user_id())
-        u = key.get()
-        if u is None:
-            u = User(key=key, is_instructor=is_instructor, courses=[])
-            u.put()  # store user in database
-        return redirect('/courses')
+            logging.info('Registering a new student.')
+        user_key = ndb.Key(User, current_user.user_id())
+        user = user_key.get()
+        if user is None:
+            user = User(key=user_key, is_instructor=is_instructor)
+            user.put()
+        return redirect(reverse(courses))
 
 
+# Displays a login form to authenticate the user.
 def login(request):
-    user = users.get_current_user()
-    logging.info('Running login()')
-    if user:
-        logging.info('Found a user with id {}'.format(user.user_id))
-        return redirect('/courses')
-    response = render(
-        'login.html',
-        {'login_url': users.create_login_url(request.path)}
-    )
-    return response
-
-
-# TODO: find a rock solid way to generate a unique ID
-def generate_course_id():
-    from random import randint
-    return ''.join(['%s' % randint(0, 9) for i in xrange(10)])
+    current_user = get_current_user()
+    logging.info('Verifying if user is logged in.')
+    if not current_user:
+        logging.info('User is not logged in.')
+        return render(request, 'login.html', {
+            'login_url': create_login_url(request.path)
+        })
+    logging.info('User is logged in as {}'.format(current_user.nickname()))
+    return redirect(reverse(courses))
 
 
 @login_required
-def course(request):
-    logging.info('Processing request for course ID {} page.'.format(course_id))
-    current_user = users.get_current_user()
+def edit_assignment(request, **kwargs):
+    current_user = get_current_user()
     user_key = ndb.Key(User, current_user.user_id())
     user = user_key.get()
-    logging.info('Current user is {}.'.format(current_user.nickname()))
-    data = {
+    course_id = kwargs['course_id']
+    course = Course.get_by_id(course_id)
+    courses_url = reverse(courses)
+    assignments_url = reverse(
+        assignments, kwargs={'course_id': course.key.id()}
+    )
+    context = {
         'user': user,
         'user_name': current_user.nickname(),
-        'logout_url': users.create_logout_url('/login'),
-        'breadcrumb': ['Courses', 'Course']
+        'logout_url': create_logout_url('/login'),
+        'view_template': 'edit_assignment.html',
+        'breadcrumb': [
+            ('Courses', courses_url),
+            (course.title, assignments_url),
+            ('Assignments', assignments_url),
+            ('Add New Assignment', '')
+        ]
     }
-    return render('course.html', data)
+    if request.is_ajax():
+        return render(request, 'view.html', context)
+    return render(request, 'base.html', context)
 
 
 @login_required
-def courses(request):
-    logging.info('Processing request for courses page.')
-    current_user = users.get_current_user()
+def assignment(request, **kwargs):
+    current_user = get_current_user()
     user_key = ndb.Key(User, current_user.user_id())
     user = user_key.get()
-    logging.info('Current user is {}.'.format(current_user.nickname()))
-    if user.is_instructor:
-        template = 'courses_instructor.html'
+    return HttpResponse()
+
+
+@login_required
+def assignments(request, **kwargs):
+    current_user = get_current_user()
+    user_key = ndb.Key(User, current_user.user_id())
+    user = user_key.get()
+    course_id = kwargs['course_id']
+    course = Course.get_by_id(course_id)
+    courses_url = reverse(courses)
+    if course is None:
+        logging.info('Invalid course ID. Redirecting to /courses/.')
+        return redirect(courses_url)
+    if not user.is_instructor and user_key not in course.students_enrolled:
+        logging.info('User is not enrolled. Redirecting to /courses/.')
+        return redirect(courses_url)
+    assignments_url = reverse(
+        assignments, kwargs={'course_id': course.key.id()}
+    )
+    add_assignment_url = reverse(
+        edit_assignment, kwargs={
+            'course_id': course.key.id(),
+            'assignment_id': Assignment.generate_id()
+        }
+    )
+    context = {
+        'user': user,
+        'user_name': current_user.nickname(),
+        'logout_url': create_logout_url('/login'),
+        'view_template': 'assignments.html',
+        'breadcrumb': [
+            ('Courses', courses_url),
+            (course.title, assignments_url),
+            ('Assignments', assignments_url)
+        ],
+        'add_assignment_url': add_assignment_url,
+        'assignments': get_assignments(course)
+    }
+    if request.is_ajax():
+        return render(request, 'view.html', context)
+    return render(request, 'base.html', context)
+
+
+def get_assignments(course):
+    assignments = []
+    for assignment_key in course.assignments:
+        assignment = assignment_key.get()
+        if assignment is not None:
+            edit_assignment_url = reverse(
+                edit_assignment, kwargs={
+                    'course_id': course.key.id(),
+                    'assignment_id': assignment.key.id()
+                }
+            )
+            assignments.append({
+                'title': assignment.title,
+                'id': assignment.key.id(),
+                'date_posted': assignment.date_posted.strftime(
+                    '%d/%m/%Y %I:%M%p'),
+                'date_due': assignment.date_due.strftime('%d/%m/%Y %I:%M%p'),
+                'submissions': len(assignment.submissions),
+                'status': False,  # change to dynamic value
+                'edit_assignment_url': edit_assignment_url
+            })
+    return assignments
+
+
+@login_required
+def students(request, **kwargs):
+    current_user = get_current_user()
+    user_key = ndb.Key(User, current_user.user_id())
+    user = user_key.get()
+    course_id = kwargs['course_id']
+    course = Course.get_by_id(course_id)
+    courses_url = reverse(courses)
+    assignments_url = reverse(
+        assignments, kwargs={'course_id': course.key.id()}
+    )
+    students_url = reverse(
+        students, kwargs={'course_id': course.key.id()}
+    )
+    context = {
+        'user': user,
+        'user_name': current_user.nickname(),
+        'logout_url': create_logout_url('/login'),
+        'view_template': 'students.html',
+        'breadcrumb': [
+            ('Courses', courses_url),
+            (course.title, assignments_url),
+            ('Students', students_url)
+        ],
+        'students_url': students_url
+    }
+    if course is None:
+        logging.info('Invalid course ID. Redirecting to /courses/.')
+        return redirect(courses_url)
+    if not user.is_instructor:
+        logging.info('Student trying to access /students/ page.')
+        return redirect(courses_url)
+    if request.is_ajax():
         if request.method == 'POST':
-            logging.info('Processing a POST request from an instructor.')
-            if request.POST['action'] == 'addCourse':
-                course_title = request.POST['course_title']
-                logging.info('POST request to add a course with title {}.'
-                             .format(course_title))
-                if len(course_title) <= 0:
-                    response = HttpResponse()
-                    response.content_type = 'application/json'
-                    response.content = json.dumps({
-                        'success': False,
-                        'message': ('The course title must be at least '
-                                    'one character.')
-                    })
-                    return response
-                course_id = generate_course_id()
-                course_instructor = [current_user.nickname()]
-                course = Course(title=course_title, id_str=course_id,
-                                instructors=course_instructor)
-                course.put()
-                user.add_course(course)
-                user.put()
-                if request.POST['ajax']:  # AJAX calls only needs new course
-                    logging.info('Responding to client with new course.')
-                    course_object = course.get_object()
-                    course_object['success'] = True
-                    response = HttpResponse()
-                    response.content_type = 'application/json'
-                    response.content = json.dumps(course_object)
-                    return response
-            elif request.POST['action'] == 'removeCourse':
-                course_id = request.POST['course_id']
-                logging.info('POST request to remove course with ID {}.'
-                             .format(course_id))
-                course = Course.get_by_id(course_id)
-                # TODO: query all users who have this course added
-                # TODO: modify model to have only one relationship
+            action_type = request.POST['action_type']
+            logging.info('Processing an action type of {}.'
+                         .format(action_type))
+            if action_type != 'approve_all':
+                student_id = request.POST['student_id']
+                student = User.get_by_id(student_id)
+                if action_type == 'approve':
+                    course.approve_student(student)
+                else:
+                    course.unapprove_student(student)
+            else:
+                course.approve_all_students()
+            course.put()
+            response = HttpResponse()
+            response.status_code = 204
+            return response
+        context['students'] = get_students(course)
+        return render(request, 'view.html', context)
+    context['students'] = get_students(course)
+    return render(request, 'base.html', context)
+
+
+def get_students(course):
+    students = []
+    for student_key in course.students_pending + course.students_enrolled:
+        student = student_key.get()
+        students.append({
+            'id': student.key.id(),
+            'name': student.key.id(),  # needs replaced with nickname
+            'status': course.is_enrolled(student)
+        })
+    return students
+
+
+@login_required
+def course(request, **kwargs):
+    current_user = get_current_user()
+    user_key = ndb.Key(User, current_user.user_id())
+    user = user_key.get()
+    course_id = kwargs['course_id']
+    course = Course.get_by_id(course_id)
+    courses_url = reverse(courses)
+    assignments_url = reverse(
+        assignments, kwargs={'course_id': course.key.id()}
+    )
+    if course is None:
+        logging.info('Invalid course ID. Redirecting to /courses/.')
+        return redirect(courses_url)
+    if request.is_ajax():
+        if request.method == 'POST':
+            logging.info('User is removing course ID {}.'.format(course_id))
+            user.remove_course(course)
+            user.put()
+            if user.is_instructor:
                 course.key.delete()
-                user.remove_course(course)
-                user.put()
-                if request.POST['ajax']:  # AJAX call only needs confirmation
-                    logging.info('Responding to client with confirmation.')
-                    return HttpResponse()
-    else:
-        template = 'courses_student.html'
-        if request.method == 'POST':
-            logging.info('Processing a POST request from a student.')
-            if request.POST['action'] == 'joinCourse':
-                course_id = request.POST['course_id']
-                logging.info('Student requests to join course with ID {}.'
-                             .format(course_id))
-                course = Course.get_by_id(course_id)
-                if course is None:
-                    response = HttpResponse()
-                    response.content_type = 'application/json'
-                    response.content = json.dumps({
-                        'success': False,
-                        'message': ('Unable to find course matching the ID. '
-                                    'Please verify the ID and try again.')
-                    })
-                    return response
-                status = course.get_enrollment_status(user)
-                if status in ['Enrolled', 'Pending']:
-                    response = HttpResponse()
-                    response.content_type = 'application/json'
-                    response.content = json.dumps({
-                        'success': False,
-                        'message': ('You are already enrolled in this course.'
-                                    if status == 'Enrolled' else
-                                    'Your enrollment is pending approval.')
-                    })
-                    return response
-                course.add_student(user)
-                course.put()
-                user.add_course(course)
-                user.put()
-                if request.POST['ajax']:
-                    logging.info('Responding to client with new course.')
-                    response = HttpResponse()
-                    response.content_type = 'application/json'
-                    course_object = course.get_object_with_status(user)
-                    course_object['success'] = True
-                    response.content = json.dumps(course_object)
-                    return response
-            elif request.POST['action'] == 'leaveCourse':
-                course_id = request.POST['course_id']
-                logging.info('Student requests to leave course with ID {}.'
-                             .format(course_id))
-                course = Course.get_by_id(course_id)
+            else:
                 course.remove_student(user)
                 course.put()
-                user.remove_course(course)
+            request.method = 'GET'
+            return redirect(courses_url)
+        else:
+            return redirect(assignments_url)
+    else:
+        return redirect(assignments_url)
+
+
+@login_required
+def courses(request, **kwargs):
+    current_user = get_current_user()
+    user_key = ndb.Key(User, current_user.user_id())
+    user = user_key.get()
+    courses_url = reverse(courses)
+    context = {
+        'user': user,
+        'user_name': current_user.nickname(),
+        'logout_url': create_logout_url('/login'),
+        'view_template': 'courses.html',
+        'breadcrumb': [
+            ('Courses', courses_url)
+        ],
+        'courses': get_courses(user)
+    }
+    if request.is_ajax():
+        if request.method == 'POST':
+            logging.info('Processing an AJAX POST request.')
+            if user.is_instructor:
+                if ('course_title' not in request.POST or
+                        len(request.POST['course_title']) <= 0):
+                    logging.info('Course title is not in POST request.')
+                    response = HttpResponse()
+                    response.status_code = 400
+                    response.content_type = 'application/json'
+                    response.content = json.dumps({
+                        'message': 'You must enter a title for this course.'
+                    })
+                    return response
+                course_title = request.POST['course_title']
+                logging.info('Creating a new course titled {}.'
+                             .format(course_title))
+                try:
+                    course = Course.create_course(course_title)
+                except IDTimeout:
+                    response = HttpResponse()
+                    response.status_code = 500
+                    response.content_type = 'application/json'
+                    response.content = json.dumps({
+                        'message': 'Failed to add course. Please try again.'
+                    })
+                    return response
+                user.add_course(course)
                 user.put()
-                if request.POST['ajax']:  # AJAX call only needs confirmation
-                    logging.info('Responding to client with confirmation.')
-                    return HttpResponse()
+                response = HttpResponse()
+                response.status_code = 200
+                response.content_type = 'application/json'
+                response.content = json.dumps(get_course(course, user))
+                return response
+            else:
+                if ('course_id' not in request.POST or
+                        len(request.POST['course_id']) <= 0):
+                    logging.info('Course ID is empty or not in POST request.')
+                    response = HttpResponse()
+                    response.status_code = 400
+                    response.content_type = 'application/json'
+                    response.content = json.dumps({
+                        'message': 'You must enter an ID to join a course.'
+                    })
+                    return response
+                course_id = request.POST['course_id']
+                course = Course.get_by_id(course_id)
+                if not course:
+                    logging.info('Failed to find course with ID {}.'
+                                 .format(course_id))
+                    response = HttpResponse()
+                    response.status_code = 400
+                    response.content_type = 'application/json'
+                    response.content = json.dumps({
+                        'message': ('{} is not a valid course ID.'
+                                    .format(course_id))
+                    })
+                    return response
+                logging.info('Joining course with ID {}.'.format(course_id))
+                if course.key in user.courses:
+                    logging.info('Student already in course.')
+                    response = HttpResponse()
+                    response.status_code = 400
+                    response.content_type = 'application/json'
+                    response.content = json.dumps({
+                        'message': ('You are already enrolled in or pending '
+                                    'approval for this course.')
+                    })
+                    return response
+                user.add_course(course)
+                user.put()
+                course.add_student(user)
+                course.put()
+                response = HttpResponse()
+                response.status_code = 200
+                response.content_type = 'application/json'
+                response.content = json.dumps(get_course(course, user))
+                return response
+        else:
+            return render(request, 'view.html', context)
+    else:
+        return render(request, 'base.html', context)
+
+
+def get_courses(user):
     courses = []
     for course_key in user.courses:
         course = course_key.get()
         if course is not None:
-            courses.append(course.get_object_with_status(user))
-    data = {
-        'user': user,
-        'user_name': current_user.nickname(),
-        'logout_url': users.create_logout_url('/login'),
-        'courses': courses,
-        'breadcrumb': {'Courses'}
+            courses.append(get_course(course, user))
+    return courses
+
+
+def get_course(this, user):
+    assignments_url = reverse(
+        assignments, kwargs={'course_id': this.key.id()}
+    )
+    students_url = reverse(
+        students, kwargs={'course_id': this.key.id()}
+    )
+    course_url = reverse(
+        course, kwargs={'course_id': this.key.id()}
+    )
+    return {
+        'title': this.title,
+        'id': this.key.id(),
+        'enrolled': len(this.students_enrolled),
+        'pending': len(this.students_pending),
+        'assignments': len(this.assignments),
+        'instructors': ', '.join(this.instructors),
+        'status': this.is_enrolled(user),
+        'assignments_url': assignments_url,
+        'students_url': students_url,
+        'course_url': course_url
     }
-    data.update(csrf(request))
-    return render(template, data)
