@@ -1,0 +1,42 @@
+<div class="page-header clearfix">
+    <h2 class="page-title">
+        {% with breadcrumb|last as current_page %}
+            {{ current_page.0 }}
+        {% endwith %}
+    </h2><!-- .page-title -->
+</div><!-- .page-header -->
+<div class="panel panel-default">
+    <ul class="list-group student-list">
+        {% for student in students %}
+            <li class="list-group-item student {% if not student.status %}list-group-item-warning student-unapproved{% else %}student-approved{% endif %}" id="student-{{ student.id }}">
+                <div class="row">
+                    <div class="col-xs-6 student-name">
+                        {{ student.name }}
+                    </div><!-- .student-name -->
+                    <div class="col-xs-6 student-actions">
+                        <form class="approve-student-form" method="post" action="{{ students_url }}">
+                            {% csrf_token %}
+                            <input type="hidden" name="student_id" value="{{ student.id }}">
+                            <input type="hidden" name="action_type" value="approve">
+                            <button type="submit" class="btn btn-success btn-xs pull-right" data-loading="Approving..."><span class="glyphicon glyphicon-ok"></span> Approve</button>
+                        </form><!-- .approve-student-form -->
+                        <form class="unapprove-student-form" method="post" action="{{ students_url }}">
+                            {% csrf_token %}
+                            <input type="hidden" name="student_id" value="{{ student.id }}">
+                            <input type="hidden" name="action_type" value="unapprove">
+                            <button type="submit" class="btn btn-default btn-xs pull-right" data-loading="Unapproving..."><span class="glyphicon glyphicon-remove"></span> Unapprove</button>
+                        </form><!-- .unapprove-student-form -->
+                    </div><!-- .student-actions -->
+                </div><!-- .row -->
+            </li><!-- .list-group-item .course -->
+        {% empty %}
+            <li class="list-group-item student-none">
+                <div class="row">
+                    <div class="col-xs-12 text-muted">
+                        No students have joined this course yet.
+                    </div>
+                </div><!-- .row -->
+            </li><!-- .list-group-item .course -->
+        {% endfor %}
+    </ul><!-- .list-group -->
+</div><!-- .panel .panel-default -->

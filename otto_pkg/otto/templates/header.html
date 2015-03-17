@@ -1,0 +1,20 @@
+<nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header navbar-left">
+            <a class="navbar-brand" href="/">Otto</a>
+        </div><!-- .navbar-header .navbar-left -->
+        <div class="navbar-collapse collapse navbar-right">
+            <ul class="nav navbar-nav">
+                {% include 'notifications.html' %}
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+                        Signed in as {{ user_name }} <span class="caret"></span></span>
+                    </a>
+                    <ul class="dropdown-menu" role="menu">
+                        <li><a href="{{ logout_url }}" title="Sign out of Otto">Sign out</a></li>
+                    </ul>
+                </li>
+            </ul><!-- .nav .navbar-nav -->
+        </div><!-- .navbar-collapse .collapse .navbar-right -->
+    </div><!-- .container -->
+</nav><!-- .navbar .navbar-default -->
