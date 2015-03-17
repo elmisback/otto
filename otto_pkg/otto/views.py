@@ -117,7 +117,7 @@ def assignments(request, **kwargs):
     add_assignment_url = reverse(
         edit_assignment, kwargs={
             'course_id': course.key.id(),
-            'assignment_id': Assignment.generate_id()
+            'assignment_id': Assignment.generate_id(4)
         }
     )
     context = {
