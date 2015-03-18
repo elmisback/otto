@@ -9,13 +9,15 @@
         {% endif %}
     </h2><!-- .page-title -->
 </div><!-- .page-header -->
-<form method="post">
+<form method="post" action="{{ file_upload_url }}">
     {% csrf_token %}
     <div class="form-group">
         <label for="assignment-title">Assignment Title</label>
         <input type="text" name="assignment-title" class="form-control" placeholder="e.g. Assignment 1">
     </div><!-- .form-group -->
     <div class="form-group">
-        <button type="submit" class="btn btn-success">Save Assignment</button>
+            Upload File: <input type="file" name="file">
+            <input type="submit" class="btn btn-success" name="submit" value="Save Assignment"> 
+        </form>
     </div><!-- .form-group -->
 </form><!-- .form-horizontal -->

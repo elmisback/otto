@@ -2,7 +2,7 @@ import json
 import logging
 
 from google.appengine.api.users import *
-from google.appengine.ext import ndb
+from google.appengine.ext import ndb, blobstore
 
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -10,9 +10,11 @@ from django.core.urlresolvers import reverse
 
 from models import *
 
+from functools import wraps
 
 # Verifies that the user logged in before proceeding to view.
-def login_required(fn):
+def login_required_wrapper(fn):
+    @wraps(fn)
     def wrapper(request, **kwargs):
         logging.info('Verifying if user is logged in.')
         current_user = get_current_user()
@@ -26,7 +28,28 @@ def login_required(fn):
             logging.info('User has not logged in before. Registering...')
             return render(request, 'register.html')
         return fn(request, **kwargs)
+     
     return wrapper
+
+def login_required():
+    """An inline replacement for the login_required wrapper.
+
+    Compatible with Django's reverse URL lookup.
+    Returns: False if the user is logged in ; otherwise, a function to 
+        register/log in the user.
+    """
+    logging.info('Verifying if user is logged in.')
+    current_user = get_current_user()
+    if not current_user:
+        logging.info('User is not logged in.')
+        return login
+    logging.info('User is logged in. Checking for previous history.')
+    user_key = ndb.Key(User, current_user.user_id())
+    user = user_key.get()
+    if user is None:
+        logging.info('User has not logged in before. Registering...')
+        return lambda r: render(r, 'register.html')
+    return False
 
 
 # Registers a first time user either as an instructor or a student.
@@ -61,8 +84,18 @@ def login(request):
     return redirect(reverse(courses))
 
 
-@login_required
+# Handles a Blobstore upload.
+def upload(request, **kwargs):
+    logging.info("Uploading a Blobstore file...")
+    if request.method == 'POST': 
+        logging.info('File name was {}'.format(request.POST['file'][0]))
+        return redirect('/courses/{}/assignments/'.format(kwargs['course_id']))
+
+
 def edit_assignment(request, **kwargs):
+    login_fn = login_required()
+    if login_fn:
+        return login_fn(request)
     current_user = get_current_user()
     user_key = ndb.Key(User, current_user.user_id())
     user = user_key.get()
@@ -82,23 +115,29 @@ def edit_assignment(request, **kwargs):
             (course.title, assignments_url),
             ('Assignments', assignments_url),
             ('Add New Assignment', '')
-        ]
+        ],
+        'file_upload_url': blobstore.create_upload_url(
+                        '/courses/{}/assignments/upload/'.format(course_id)),
     }
     if request.is_ajax():
         return render(request, 'view.html', context)
     return render(request, 'base.html', context)
 
 
-@login_required
 def assignment(request, **kwargs):
+    login_fn = login_required()
+    if login_fn:
+        return login_fn(request)
     current_user = get_current_user()
     user_key = ndb.Key(User, current_user.user_id())
     user = user_key.get()
     return HttpResponse()
 
 
-@login_required
 def assignments(request, **kwargs):
+    login_fn = login_required()
+    if login_fn:
+        return login_fn(request)
     current_user = get_current_user()
     user_key = ndb.Key(User, current_user.user_id())
     user = user_key.get()
@@ -162,8 +201,10 @@ def get_assignments(course):
     return assignments
 
 
-@login_required
 def students(request, **kwargs):
+    login_fn = login_required()
+    if login_fn:
+        return login_fn(request)
     current_user = get_current_user()
     user_key = ndb.Key(User, current_user.user_id())
     user = user_key.get()
@@ -230,8 +271,10 @@ def get_students(course):
     return students
 
 
-@login_required
 def course(request, **kwargs):
+    login_fn = login_required()
+    if login_fn:
+        return login_fn(request)
     current_user = get_current_user()
     user_key = ndb.Key(User, current_user.user_id())
     user = user_key.get()
@@ -262,8 +305,10 @@ def course(request, **kwargs):
         return redirect(assignments_url)
 
 
-@login_required
 def courses(request, **kwargs):
+    login_fn = login_required()
+    if login_fn:
+        return login_fn(request)
     current_user = get_current_user()
     user_key = ndb.Key(User, current_user.user_id())
     user = user_key.get()
