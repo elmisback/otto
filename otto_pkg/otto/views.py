@@ -2,6 +2,7 @@ import json
 import logging
 
 from google.appengine.api.users import *
+from google.appengine.api import mail
 from google.appengine.ext import ndb
 
 from django.http import HttpResponse
@@ -204,6 +205,13 @@ def students(request, **kwargs):
                 student = User.get_by_id(student_id)
                 if action_type == 'approve':
                     course.approve_student(student)
+                    logging.info('Sending email to {} of students approval'
+                                  .format(current_user.email()))
+                    mail.send_mail(sender="Otto team <bapratt94@gmail.com>",
+                                   to=current_user.email(),
+                                   subject="Student approved for {}".format(course.title),
+                                   body="Student {} has been approved.".format(student_id)
+                                   )
                 else:
                     course.unapprove_student(student)
             else:
