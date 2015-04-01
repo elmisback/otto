@@ -9,11 +9,11 @@
         {% endif %}
     </h2><!-- .page-title -->
 </div><!-- .page-header -->
-<form method="post">
+<form method="post" action="{{ edit_assignment_url }}">
     {% csrf_token %}
     <div class="form-group">
         <label for="assignment-title">Assignment Title</label>
-        <input type="text" name="assignment-title" class="form-control" placeholder="e.g. Assignment 1">
+        <input type="text" name="assignment_title" class="form-control" placeholder="e.g. Assignment 1">
     </div><!-- .form-group -->
     <div class="form-group">
         <button type="submit" class="btn btn-success">Save Assignment</button>

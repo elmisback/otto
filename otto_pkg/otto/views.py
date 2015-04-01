@@ -48,7 +48,6 @@ def register(request):
             user.put()
         return redirect(reverse(courses))
 
-
 # Displays a login form to authenticate the user.
 def login(request):
     current_user = get_current_user()
@@ -61,6 +60,17 @@ def login(request):
     logging.info('User is logged in as {}'.format(current_user.nickname()))
     return redirect(reverse(courses))
 
+@login_required
+def save_assignment(request, **kwargs):
+    current_user = get_current_user()
+    user_key = ndb.Key(User, current_user.user_id())
+    user = user_key.get()
+    course_id = kwargs['course_id']
+    course = Course.get_by_id(course_id)
+    assignments_url = reverse(
+        assignments, kwargs={'course_id': course.key.id()}
+    )
+    return redirect(assignments_url)
 
 @login_required
 def edit_assignment(request, **kwargs):
@@ -69,26 +79,43 @@ def edit_assignment(request, **kwargs):
     user = user_key.get()
     course_id = kwargs['course_id']
     course = Course.get_by_id(course_id)
-    courses_url = reverse(courses)
-    assignments_url = reverse(
-        assignments, kwargs={'course_id': course.key.id()}
-    )
+    assignments_url = reverse(assignments, 
+                              kwargs={'course_id': kwargs['course_id']})
+    edit_assignment_url = reverse(edit_assignment, kwargs=kwargs)
     context = {
         'user': user,
         'user_name': current_user.nickname(),
         'logout_url': create_logout_url('/login'),
         'view_template': 'edit_assignment.html',
+        'assignments_url' : assignments_url, 
+        'edit_assignment_url' : edit_assignment_url, 
         'breadcrumb': [
-            ('Courses', courses_url),
+            ('Courses', reverse(courses)),
             (course.title, assignments_url),
             ('Assignments', assignments_url),
             ('Add New Assignment', '')
         ]
     }
+    if request.method == "POST":
+        # Add the assignment to the course's assignments
+        logging.info("Adding an assignment...")
+        logging.info(request.POST['assignment_title'])
+        assignment = Assignment(title=request.POST['assignment_title'], 
+                                id=kwargs['assignment_id'])
+        from datetime import datetime, timedelta
+        date = datetime.now()
+        date = date.replace(hour=0, minute=0, second=0, microsecond=0)
+        date += timedelta(weeks=1) - timedelta(minutes=1)
+        assignment.date_due = date
+        assignment.put()
+        logging.info('Added assignment: ' + str(assignment.key.get()))
+        course.assignments.append(assignment.key)
+        logging.info(course.assignments)
+        course.put()
+        return redirect(assignments_url)
     if request.is_ajax():
         return render(request, 'view.html', context)
     return render(request, 'base.html', context)
-
 
 @login_required
 def assignment(request, **kwargs):
@@ -141,8 +168,11 @@ def assignments(request, **kwargs):
 
 def get_assignments(course):
     assignments = []
+    logging.info(course.assignments)
     for assignment_key in course.assignments:
         assignment = assignment_key.get()
+        logging.info(assignment_key)
+        logging.info(assignment)
         if assignment is not None:
             edit_assignment_url = reverse(
                 edit_assignment, kwargs={
@@ -160,6 +190,7 @@ def get_assignments(course):
                 'status': False,  # change to dynamic value
                 'edit_assignment_url': edit_assignment_url
             })
+    logging.info(assignments)
     return assignments
 
 

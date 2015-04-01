@@ -23,24 +23,24 @@
     </div><!-- .panel-heading -->
     <div class="list-group course-list">
         {% for assignment in assignments %}
-            <div class="list-group-item assignment" id="assignment-{{ course.course_id }}">
+            <div class="list-group-item assignment" id="assignment-{{ assignment.id }}">
                 <div class="row">
                     <div class="col-xs-6 attr-assignment-name">
-                        {# assignment name #}
+                      {{ assignment.title }}
                     </div>
                     <div class="col-xs-2 attr-assignment-date-posted">
-                        {# assignment posted date #}
+                      {{ assignment.date_posted }}
                     </div>
                     <div class="col-xs-2 attr-assignment-date-due">
-                        {# assignment due date #}
+                      {{ assignment.date_due }}
                     </div>
                     {% if user.is_instructor %}
                         <div class="col-xs-1 attr-assignment-submissions">
-                            {# number of submissions #}
+                          {{ assignment.submissions }}
                         </div>
                     {% else %}
                         <div class="col-xs-1 attr-assignment-status">
-                            {# student submission status (true/false) #}
+                          {{ assignment.status }}
                         </div>
                     {% endif %}
                 </div><!-- .row -->
