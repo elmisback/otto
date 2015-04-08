@@ -3,6 +3,7 @@
         <div class="navbar-header navbar-left">
             <a class="navbar-brand" href="/">Otto</a>
         </div><!-- .navbar-header .navbar-left -->
+        {% if user %}
         <div class="navbar-collapse collapse navbar-right">
             <ul class="nav navbar-nav">
                 {% include 'notifications.html' %}
@@ -16,5 +17,6 @@
                 </li>
             </ul><!-- .nav .navbar-nav -->
         </div><!-- .navbar-collapse .collapse .navbar-right -->
+        {% endif %} 
     </div><!-- .container -->
 </nav><!-- .navbar .navbar-default -->

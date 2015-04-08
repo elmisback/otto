@@ -11,6 +11,7 @@ from views import *
 class User(ndb.Model):
     is_instructor = ndb.BooleanProperty()
     courses = ndb.KeyProperty(kind='Course', repeated=True)
+    notifications = ndb.KeyProperty(kind='Notification', repeated=True)
 
     def add_course(self, course):
         self.courses.append(course.key)
@@ -18,6 +19,16 @@ class User(ndb.Model):
     def remove_course(self, course):
         if course.key in self.courses:
             self.courses.remove(course.key)
+
+    def add_notification(self, notification):
+        self.notifications.append(notification.key)
+
+    def remove_notification(self, notification):
+        if notification.key in self.notifications:
+            self.notifications.remove(notification.key)
+
+    def remove_all_notifications(self):
+        del notifications[:]
 
 
 class Notification(ndb.Model):

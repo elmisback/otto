@@ -56,7 +56,8 @@ def login(request):
     if not current_user:
         logging.info('User is not logged in.')
         return render(request, 'login.html', {
-            'login_url': create_login_url(request.path)
+            'login_url': create_login_url(request.path),
+            'user': current_user
         })
     logging.info('User is logged in as {}'.format(current_user.nickname()))
     return redirect(reverse(courses))
@@ -205,6 +206,10 @@ def students(request, **kwargs):
                 student = User.get_by_id(student_id)
                 if action_type == 'approve':
                     course.approve_student(student)
+                    logging.info('Nofication sent to approved student {}'.format(student_id))
+                    list = []
+                    list.append(student)
+                    send_notification(list, 'You have been approved for {}.'.format(course.title), assignments_url)
                     logging.info('Sending email to {} of students approval'
                                   .format(current_user.email()))
                     mail.send_mail(sender="Otto team <bapratt94@gmail.com>",
@@ -284,7 +289,8 @@ def courses(request, **kwargs):
         'breadcrumb': [
             ('Courses', courses_url)
         ],
-        'courses': get_courses(user)
+        'courses': get_courses(user),
+        'notifications': get_notifications(user)
     }
     if request.is_ajax():
         if request.method == 'POST':
@@ -401,3 +407,26 @@ def get_course(this, user):
         'students_url': students_url,
         'course_url': course_url
     }
+
+def send_notification(recipients, message_str, target=None):
+    notification = Notification(message=message_str, target_url=target)
+    notification.put()
+    for recipient in recipients:
+        recipient.add_notification(notification)
+        recipient.put()
+
+def get_notifications(user):
+    notif_list = []
+    for notif_key in user.notifications:
+        notif = notif_key.get()
+        if notif is not None:
+            notif_list.append(notif)
+    return notif_list
+
+def get_enrolled(course):
+    enrolled_students = []
+    for student_key in course.students_enrolled:
+        student = student_key.get()
+        if student is not None:
+            enrolled_students.append(student)
+    return enrolled_students 
