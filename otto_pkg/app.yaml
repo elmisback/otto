@@ -17,6 +17,8 @@ handlers:
   static_dir: "static/img"
 - url: "/fonts"
   static_dir: "static/fonts"
+- url: "/upload-submission/"
+  script: otto.views.upload_handler
 
 builtins:
 - django_wsgi: on

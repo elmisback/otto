@@ -3,7 +3,7 @@ import logging
 
 from google.appengine.api.users import *
 from google.appengine.api import mail
-from google.appengine.ext import ndb
+from google.appengine.ext import ndb, blobstore
 
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -59,6 +59,42 @@ def login(request):
         })
     logging.info('User is logged in as {}'.format(current_user.nickname()))
     return redirect(reverse(courses))
+
+#### Additions (Also see TODO sections below.)
+from google.appengine.ext import webapp
+from google.appengine.ext.webapp import blobstore_handlers
+
+# Because there's no native Django Blobstore interaction, we've got to 
+# instantiate another WSGIapp just for handling uploads.
+class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
+    def post(self):
+        current_user = get_current_user()
+        user_key = ndb.Key(User, current_user.user_id())
+        try:
+            upload = self.get_uploads()[0]
+            sub = Submission.create_submission(student=current_user, 
+                                               file_blob=upload.key(), 
+                                               title=upload.filename)
+            logging.info(sub.key.id())
+            #self.response.out.write(json.dumps({'key': sub.key.id()}))
+        except:
+            logging.error("Error uploading submission.")
+            raise
+
+upload_handler = webapp.WSGIApplication(
+                    [('/upload_submission/', UploadHandler),], debug=True)
+
+@login_required
+def download_submission(request):
+    logging.info(request.GET)
+    sub_id = request.GET['key']
+    sub = Submission.get_by_id(sub_id)
+    response = HttpResponse(blobstore.BlobReader(sub.file_blob).read())
+    response['Content-Disposition'] = ('attachment; filename="{}"'
+                                        .format(sub.title))
+    return response
+
+#### End Additions 
 
 @login_required
 def save_assignment(request, **kwargs):
@@ -123,7 +159,6 @@ def assignment(request, **kwargs):
     user_key = ndb.Key(User, current_user.user_id())
     user = user_key.get()
     return HttpResponse()
-
 
 @login_required
 def assignments(request, **kwargs):
@@ -310,6 +345,13 @@ def courses(request, **kwargs):
     context = {
         'user': user,
         'user_name': current_user.nickname(),
+
+        # TODO move this data into a relevant view
+        'upload_url': #reverse(upload_submission), 
+            blobstore.create_upload_url('/upload-submission/'),
+        'download_url': reverse(download_submission),
+        'sub_key': '99523827604',  # TODO (testing value) application-defined
+
         'logout_url': create_logout_url('/login'),
         'view_template': 'courses.html',
         'breadcrumb': [

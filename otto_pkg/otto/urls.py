@@ -16,4 +16,5 @@ urlpatterns = patterns(
         '(?P<assignment_id>\d{4})/edit/$', views.edit_assignment),
     url(r'^login/$', views.login),
     url(r'^register/$', views.register),
+    url(r'^download-submission/$', views.download_submission),
 )

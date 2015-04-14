@@ -38,10 +38,48 @@ class Comment(ndb.Model):
 class Submission(ndb.Model):
     student = ndb.UserProperty()
     file_blob = ndb.BlobKeyProperty()  # uses blobstore for files
-    time = ndb.DateTimeProperty()
+    title = ndb.StringProperty()
+    time = ndb.DateTimeProperty(auto_now_add=True)
     flagged = ndb.BooleanProperty()
     comments = ndb.KeyProperty(kind='Comment', repeated=True)
     graded = ndb.BooleanProperty()
+
+    @classmethod
+    @ndb.transactional(xg=True)
+    def _create_submission(cls, title, student, file_blob):
+        digits = 11
+        submission = cls(title=title, student=student, file_blob=file_blob,
+                         id=cls.generate_id(digits))
+        submission.put()
+        return submission
+
+    @classmethod
+    def create_submission(cls, title, student, file_blob):
+        submission = None
+        while submission is None:
+            try:
+                submission = cls._create_submission(title, student, file_blob)
+            except db.TransactionFailedError:
+                break
+        return submission
+
+    @classmethod
+    def generate_id(cls, digits):
+        import time
+        from random import randint
+        id_gen = lambda: ''.join([str(randint(0, 9)) for i in xrange(digits)])
+        submission_id = id_gen()
+        submission = cls.get_by_id(submission_id)
+        t0 = time.time()
+        timeout = 2  # seconds
+        while submission:
+            if time.time() > t0 + timeout:
+                logging.error('Failed to generate a unique ID in time.'
+                              'The ID space may be too saturated.')
+                raise IDTimeout
+            submission_id = id_gen()
+            submission = cls.get_by_id(submission_id)
+        return submission_id
 
 
 class Assignment(ndb.Model):
