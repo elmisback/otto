@@ -35,6 +35,7 @@ class Comment(ndb.Model):
 class Submission(ndb.Model):
     student = ndb.KeyProperty(kind='User')
     file_blob = ndb.BlobKeyProperty()  # uses blobstore for files
+    filename = ndb.StringProperty(indexed=False)
     time = ndb.DateTimeProperty(auto_now_add=True)
 
 

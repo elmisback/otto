@@ -4,7 +4,8 @@ from datetime import datetime, timedelta
 
 from google.appengine.api.users import *
 from google.appengine.api import mail
-from google.appengine.ext import ndb, webapp
+from google.appengine.ext import ndb, blobstore, webapp
+from google.appengine.ext.webapp import blobstore_handlers
 
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -16,20 +17,20 @@ from bs4 import BeautifulSoup
 
 
 # A handler for our submission file uploads.
-class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
+class UploadHandler(webapp.blobstore_handlers.BlobstoreUploadHandler):
+    def get(self):
+        logging.info('fadfasdf')
     def post(self):
         current_user = get_current_user()
         user_key = ndb.Key(User, current_user.user_id())
         try:
             upload = self.get_uploads()[0]
-            sub = Submission.create_submission(student=current_user,
-                                               file_blob=upload.key(),
-                                               title=upload.filename)
-            logging.info(sub.key.id())
-            #self.response.out.write(json.dumps({'key': sub.key.id()}))
+            sub = Submission(student=current_user, file_blob=upload.key(),
+                             filename=upload.filename)
         except:
             logging.error("Error uploading submission.")
             raise
+        return redirect(reverse(courses))
 
 upload_handler = webapp.WSGIApplication([('/upload/', UploadHandler),], debug=True)
 
