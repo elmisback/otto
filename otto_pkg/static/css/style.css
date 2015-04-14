@@ -8,7 +8,6 @@ body {
 
 .container {
     max-width: 970px;
-    min-width: 768px;
 }
 
 .site-breadcrumb {
@@ -21,27 +20,35 @@ body {
 	margin-top: 50px;
 }
 
-.course-list .course:nth-of-type(2) {
+.course-list .course:nth-of-type(2),
+.comment-list .comment:nth-of-type(2) {
     border-top: 0;
 }
 
-.course-list .course-none {
+.course-list .course-none,
+.assignment-list .assignment-none {
     display: none;
 }
 
-.course-list .course-none:only-of-type {
+.course-list .course-none:only-of-type,
+.assignment-list .assignment-none:only-of-type {
     display: block;
 }
 
-.course-list .course-none .course-actions {
+.course-list .course-none .course-actions,
+.assignment-list .assignment-none .assignment-actions {
     display: none !important;
 }
 
-.course-list .course .course-remove {
+.course-list .course .fading-actions,
+.assignment-list .assignment .fading-actions,
+.submission .download {
     visibility: hidden;
 }
 
-.course-list .course:hover .course-remove {
+.course-list .course:hover .fading-actions,
+.assignment-list .assignment:hover .fading-actions,
+.submission:hover .download {
     visibility: visible;
 }
 
@@ -60,4 +67,20 @@ body {
 
 .student-approved .unapprove-student-form {
     display: block;
+}
+
+.fading-actions .btn {
+    margin-left: 5px;
+}
+
+.form-group .alert {
+    margin-top: 10px;
+}
+
+.comment {
+    padding: 15px;
+}
+
+.comment .close {
+    margin-top: -2px;
 }

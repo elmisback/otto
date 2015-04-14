@@ -1,21 +1,33 @@
-<div class="page-header clearfix">
-    <h2 class="page-title">
-        {% with breadcrumb|last as current_page %}
-            {{ current_page.0 }}
-        {% endwith %}
-        {% if user.is_instructor %}
-            <a href="{{ assignments_url }}" class="btn btn-success pull-right">Save Assignment</a>
-            <a href="{{ assignments_url }}" class="btn btn-default pull-right">Discard</a>
-        {% endif %}
-    </h2><!-- .page-title -->
-</div><!-- .page-header -->
-<form method="post" action="{{ edit_assignment_url }}">
-    {% csrf_token %}
-    <div class="form-group">
-        <label for="assignment-title">Assignment Title</label>
-        <input type="text" name="assignment_title" class="form-control" placeholder="e.g. Assignment 1">
-    </div><!-- .form-group -->
-    <div class="form-group">
-        <button type="submit" class="btn btn-success">Save Assignment</button>
-    </div><!-- .form-group -->
-</form><!-- .form-horizontal -->
+<form method="post" action="{{ edit_assignment_url }}" class="edit_assignment_form">
+    <div class="page-header clearfix">
+        <h2 class="page-title">
+            {{ page_title }}
+            <button type="submit" name="save" class="btn btn-success pull-right" data-loading="{{ assignment|yesno:'Saving...,Creating...' }}">{{ assignment|yesno:'Save Assignment,Create Assignment' }}</button>
+            {% if assignment %}
+                <button type="submit" name="remove" class="btn btn-danger pull-right" data-loading="Removing...">Remove</button>
+            {% endif %}
+            <a href="{{ assignments_url }}" class="btn btn-default pull-right">Cancel</a>
+        </h2><!-- .page-title -->
+    </div><!-- .page-header -->
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="form-group">
+                <label for="assignment_description">Description</label>
+                <textarea name="assignment_description" class="form-control" cols="40" rows="12">{{ assignment.description }}</textarea>
+                <p class="help-block">The following tags are supported: <code>h1</code>, <code>h2</code>, <code>h3</code>, <code>h4</code>, <code>h5</code>, <code>h6</code>, <code>strong</code>, <code>em</code>, <code>p</code>, <code>ul</code>, <code>ol</code>, <code>li</code>, <code>br</code>, <code>a</code>, and <code>img</code>.</p>
+            </div><!-- .form-group -->
+        </div>
+        <div class="col-sm-6">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="assignment_title">Title</label>
+                <input type="text" name="assignment_title" class="form-control"value="{{ assignment.title }}">
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <label for="assignment_due_date">Due Date</label>
+                <input type="text" name="assignment_due_date" class="form-control datetimepicker" value="{{ assignment_due_date }}">
+                <p class="help-block">Students will not be able to upload new submissions after this deadline.</p>
+            </div><!-- .form-group -->
+        </div>
+    </div><!-- .row -->
+</form>

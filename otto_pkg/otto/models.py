@@ -3,14 +3,13 @@ import logging
 from google.appengine.ext import ndb, db
 from google.appengine.api.users import *
 
-from django.core.urlresolvers import reverse
-
 from views import *
 
 
 class User(ndb.Model):
-    is_instructor = ndb.BooleanProperty()
+    nickname = ndb.StringProperty(indexed=False)
     courses = ndb.KeyProperty(kind='Course', repeated=True)
+    is_instructor = ndb.BooleanProperty()
 
     def add_course(self, course):
         self.courses.append(course.key)
@@ -29,27 +28,21 @@ class Notification(ndb.Model):
 
 class Comment(ndb.Model):
     date_posted = ndb.DateTimeProperty(auto_now_add=True)
-    message = ndb.StringProperty()
+    message = ndb.StringProperty(indexed=False)
     poster = ndb.KeyProperty(kind='User')
-    id_str = ndb.StringProperty()
-    parent_comment = ndb.KeyProperty(kind='Comment')
 
 
 class Submission(ndb.Model):
-    student = ndb.UserProperty()
+    student = ndb.KeyProperty(kind='User')
     file_blob = ndb.BlobKeyProperty()  # uses blobstore for files
-    time = ndb.DateTimeProperty()
-    flagged = ndb.BooleanProperty()
-    comments = ndb.KeyProperty(kind='Comment', repeated=True)
-    graded = ndb.BooleanProperty()
+    time = ndb.DateTimeProperty(auto_now_add=True)
 
 
 class Assignment(ndb.Model):
     title = ndb.StringProperty()
     date_due = ndb.DateTimeProperty()
     date_posted = ndb.DateTimeProperty(auto_now_add=True)
-    description = ndb.StringProperty()
-    changes = ndb.StringProperty(repeated=True)
+    description = ndb.StringProperty(indexed=False)
     submissions = ndb.KeyProperty(kind='Submission', repeated=True)
     comments = ndb.KeyProperty(kind='Comment', repeated=True)
 
@@ -73,6 +66,24 @@ class Assignment(ndb.Model):
 
     @classmethod
     def generate_id(cls, digits):
+        import time
+        from random import randint
+        id_gen = lambda: ''.join([str(randint(0, 9)) for i in xrange(digits)])
+        assignment_id = id_gen()
+        assignment = cls.get_by_id(assignment_id)
+        t0 = time.time()
+        timeout = 2  # seconds
+        while assignment:
+            if time.time() > t0 + timeout:
+                logging.error('Failed to generate a unique ID in time.'
+                              'The ID space may be too saturated.')
+                raise IDTimeout
+            assignment_id = id_gen()
+            assignment = cls.get_by_id(assignment_id)
+        return assignment_id
+
+
+def generate_id(cls, digits):
         import time
         from random import randint
         id_gen = lambda: ''.join([str(randint(0, 9)) for i in xrange(digits)])

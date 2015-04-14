@@ -18,20 +18,26 @@
             <div class="row">
                 <div class="col-xs-12 course-none-message">
                     <span class="text-muted">You have not added any courses. <a href="#" role="button" data-toggle="modal" data-target="#addCourseModal">Add a course</a></span>
-                </div>
-                <div class="col-xs-2 course-id"><div></div></div><!-- .course-id -->
+                </div><!-- .course-none-message -->
+                <div class="col-xs-2 course-id">
+                    <div></div>
+                </div><!-- .course-id -->
                 <div class="col-xs-5 course-name"></div><!-- .course-name -->
                 <div class="col-xs-5 course-actions">
-                    <div class="btn-group">
-                        <a href="#" class="btn btn-default btn-xs course-assignments-url"><span class="glyphicon glyphicon-file"></span> Assignments {% if not user.is_instructor and course.assignments > 0 %}<span class="badge">{{ course.assignments }}</span>{% endif %}</a>
-                        {% if user.is_instructor %}
-                            <a href="{{ course.students_url }}" class="btn btn-default btn-xs course-students-url"><span class="glyphicon glyphicon-user"></span> Students {% if course.pending > 0 %}<span class="badge">{{ course.pending }}</span>{% endif %}</a>
-                        {% endif %}
-                    </div><!-- .btn-group -->
-                    <button class="btn btn-danger btn-xs pull-right course-remove" data-toggle="modal" data-target="#removeCourseModal"><span class="glyphicon glyphicon-trash"></span> Remove</button>
+                    <div class="static-actions pull-left">
+                        <div class="btn-group">
+                            <a href="#" class="btn btn-default btn-xs course-assignments-url"><span class="glyphicon glyphicon-file"></span> Assignments</a>
+                            {% if user.is_instructor %}
+                                <a href="{{ course.students_url }}" class="btn btn-default btn-xs course-students-url"><span class="glyphicon glyphicon-user"></span> Students</a>
+                            {% endif %}
+                        </div><!-- .btn-group -->
+                    </div><!-- .static-actions -->
+                    <div class="fading-actions pull-right">
+                        <button class="btn btn-danger btn-xs pull-right course-remove fading-button" data-toggle="modal" data-target="#removeCourseModal"><span class="glyphicon glyphicon-trash"></span> Remove</button>
+                    </div><!-- .fading-actions -->
                 </div><!-- .course-actions -->
             </div><!-- .row -->
-        </li><!-- .list-group-item .course -->
+        </li><!-- .list-group-item .course-none -->
         {% for course in courses %}
             <li class="list-group-item course" id="course-{{ course.id }}" data-action="{{ course.course_url }}">
                 <div class="row">
@@ -42,13 +48,17 @@
                         <a href="{{ course.assignments_url }}" title="{{ course.title }} - Assignments">{{ course.title }}</a>
                     </div><!-- .course-name -->
                     <div class="col-xs-5 course-actions">
-                        <div class="btn-group">
-                            <a href="{{ course.assignments_url }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-file"></span> Assignments</a>
-                            {% if user.is_instructor %}
-                                <a href="{{ course.students_url }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-user"></span> Students {% if course.pending > 0 %}<span class="badge">{{ course.pending }}</span>{% endif %}</a>
-                            {% endif %}
-                        </div><!-- .btn-group -->
-                        <button class="btn btn-danger btn-xs pull-right course-remove" data-toggle="modal" data-target="#removeCourseModal"><span class="glyphicon glyphicon-trash"></span> Remove</button>
+                        <div class="static-actions pull-left">
+                            <div class="btn-group">
+                                <a href="{{ course.assignments_url }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-file"></span> Assignments</a>
+                                {% if user.is_instructor %}
+                                    <a href="{{ course.students_url }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-user"></span> Students {% if course.pending > 0 %}<span class="badge">{{ course.pending }}</span>{% endif %}</a>
+                                {% endif %}
+                            </div><!-- .btn-group -->
+                        </div><!-- .static-actions -->
+                        <div class="fading-actions pull-right">
+                            <button class="btn btn-danger btn-xs pull-right course-remove fading-button" data-toggle="modal" data-target="#removeCourseModal"><span class="glyphicon glyphicon-trash"></span> Remove</button>
+                        </div><!-- .fading-actions -->
                     </div><!-- .course-actions -->
                 </div><!-- .row -->
             </li><!-- .list-group-item .course -->

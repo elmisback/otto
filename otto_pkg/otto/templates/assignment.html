@@ -1,0 +1,136 @@
+<div class="page-header clearfix">
+    <h2 class="page-title">
+        {% with breadcrumb|last as current_page %}
+            {{ current_page.0 }}
+        {% endwith %}
+    </h2><!-- .page-title -->
+</div><!-- .page-header -->
+<div class="row">
+    <div class="col-sm-8">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                Description
+                {% if user.is_instructor %}
+                    <a href="{{ edit_assignment_url }}" class="btn btn-default btn-xs pull-right"><span class="glyphicon glyphicon-pencil"></span> Edit</a>
+                {% endif %}
+            </div><!-- .panel-heading -->
+            <div class="panel-body">
+                {% autoescape off %}{{ assignment_description }}{% endautoescape %}
+            </div><!-- .panel-body -->
+        </div><!-- .panel .panel-default -->
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                Comments
+            </div><!-- .panel-heading -->
+            <div class="list-group comment-list">
+                <div class="list-group-item comment hidden" id="comment-0">
+                    <div class="row">
+                        <div class="col-xs-4">
+                            <strong class="comment-author"></strong><br>
+                            <small class="comment-timestamp"></small>
+                        </div>
+                        <div class="col-xs-7 comment-message"></div>
+                        <div class="col-xs-1">
+                            {% if user.is_instructor %}
+                                <form method="post" action="{{ assignment_url }}" class="delete-comment-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="comment_id">
+                                    <button type="submit" class="close pull-right" name="delete_comment"><span aria-hidden="true">&times;</span></button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div><!-- .row -->
+                </div><!-- .list-group-item .comment -->
+                {% for comment in comments %}
+                    <div class="list-group-item comment {{ comment.is_instructor|yesno:'text-info,' }}" id="comment-{{ comment.id }}">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <strong class="comment-author">{{ comment.author }}</strong><br>
+                                <small class="comment-timestamp">{{ comment.timestamp }}</small>
+                            </div>
+                            <div class="col-md-8 comment-message">
+                                <div class="pull-right">
+                                    {% if user.is_instructor %}
+                                        <form method="post" action="{{ assignment_url }}" class="delete-comment-form">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="comment_id" value="{{ comment.id }}">
+                                            <button type="submit" class="close pull-right" name="delete_comment"><span aria-hidden="true">&times;</span></button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                                {{ comment.message }}
+                            </div>
+                        </div><!-- .row -->
+                    </div><!-- .list-group-item .comment -->
+                {% endfor %}
+            </div><!-- .list-group -->
+            <div class="panel-body">
+                <form method="post" action="{{ assignment_url }}" class="comment-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <textarea name="comment_message" class="form-control" cols="40" rows="6" placeholder="Add a comment message here."></textarea>
+                    </div><!-- .form-group -->
+                    <button type="submit" name="submit_comment" class="btn btn-success">Post Comment</button>
+                </form>
+            </div>
+        </div><!-- .panel .panel-default -->
+    </div>
+    <div class="col-sm-4">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                Date Posted
+            </div><!-- .panel-heading -->
+            <div class="panel-body">
+                {{ assignment_date_posted }}
+            </div><!-- .panel-body -->
+        </div><!-- .panel .panel-default -->
+        <div class="panel {{ past_deadline|yesno:'panel-danger,panel-success' }}">
+            <div class="panel-heading">
+                Date Due
+                {% if user.is_instructor %}
+                    <a href="{{ edit_assignment_url }}" class="btn btn-default btn-xs pull-right"><span class="glyphicon glyphicon-pencil"></span> Edit</a>
+                {% endif %}
+            </div><!-- .panel-heading -->
+            <div class="panel-body">
+                <span class="{{ past_deadline|yesno:'text-danger,text-success' }}">{{ assignment_date_due }}</span>
+            </div><!-- .panel-body -->
+        </div><!-- .panel .panel-default -->
+        {% if user.is_instructor %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    Submissions
+                    {% if submissions|length > 0 %}
+                        <a href="#" class="btn btn-xs btn-default pull-right"><span class="glyphicon glyphicon-save download-all"></span> Download All</a>
+                    {% endif %}
+                </div><!-- .panel-heading -->
+                <ul class="list-group submission-list">
+                    <li class="list-group-item submission" id="submission-{{ comment.id }}">
+                        <a href="#" class="btn btn-xs btn-default pull-right download"><span class="glyphicon glyphicon-save"></span> Download</a>
+                        <strong>Alex Pascal</strong><br>
+                        <span>April 13, 2015 3:50PM</span>
+                    </li><!-- .list-group-item .submission -->
+                    <li class="list-group-item submission" id="submission-{{ comment.id }}">
+                        <a href="#" class="btn btn-xs btn-default pull-right download"><span class="glyphicon glyphicon-save"></span> Download</a>
+                        <strong>John Doe</strong><br>
+                        <span>April 13, 2015 3:30PM</span>
+                    </li><!-- .list-group-item .submission -->
+                    <li class="list-group-item submission" id="submission-{{ comment.id }}">
+                        <a href="#" class="btn btn-xs btn-default pull-right download"><span class="glyphicon glyphicon-save"></span> Download</a>
+                        <strong>Salim Malakouti</strong><br>
+                        <span>April 13, 2015 2:36PM</span>
+                    </li><!-- .list-group-item .submission -->
+                </ul><!-- .list-group -->
+            </div><!-- .panel .panel-default -->
+        {% else %}
+            <div class="panel panel-success">
+                <div class="panel-heading">
+                    Submission
+                    <a href="#" class="btn btn-xs btn-default pull-right"><span class="glyphicon glyphicon-open"></span> {{ assignment_has_submission|yesno:'Resubmit,Submit' }}</a>
+                </div><!-- .panel-heading -->
+                <div class="panel-body">
+                    <span class="text-success">You submitted 'assignment2.zip' on April 13, 2015 at 5:38PM.</span>
+                </div><!-- .panel-body -->
+            </div><!-- .panel .panel-default -->
+        {% endif %}
+    </div>
+</div>
