@@ -6,6 +6,37 @@ body {
 	padding-top: 70px;
 }
 
+.view-container-wrapper {
+    position: relative;
+}
+
+.view-container {
+    -webkit-transition: -webkit-transform .3s ease-in-out, opacity .3s ease-in-out;
+    transition: transform .3s ease-in-out, opacity .3s ease-in-out;
+    margin: 0 -15px;
+    opacity: 1;
+}
+
+.changing {
+    position: absolute;
+    top: 0;
+    left: 15px;
+}
+
+.fading-left {
+/*    -webkit-transition: -webkit-transform .3s ease-in-out, opacity .3s ease-in-out;
+    transition: transform .3s ease-in-out, opacity .3s ease-in-out;*/
+    -webkit-transform: translateX(-100px);
+    transform: translateX(-100px);
+    opacity: 0;
+}
+
+.fading-right {
+    -webkit-transform: translateX(100px);
+    transform: translateX(100px);
+    opacity: 0;
+}
+
 .container {
     max-width: 970px;
 }

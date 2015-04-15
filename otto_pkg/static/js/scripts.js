@@ -10,6 +10,31 @@ jQuery(document).ready(function($){
         });
     }
 
+    function updateViewport(response, url) {
+        var viewWrapper = $('.view-container-wrapper');
+        var oldView = $('.view-container');
+        var newView = $(response);
+        var oldViewBreadcrumb = $('.site-breadcrumb li', oldView);
+        var newViewBreadcrumb = $('.site-breadcrumb li', newView);
+        var oldViewDirection = oldViewBreadcrumb.length > newViewBreadcrumb.length ? 'fading-right' : 'fading-left';
+        var newViewDirection = oldViewBreadcrumb.length > newViewBreadcrumb.length ? 'fading-left' : 'fading-right';
+        newView.addClass('changing ' + newViewDirection);
+        viewWrapper.append(newView);
+        setTimeout(function(){
+            newView.removeClass(newViewDirection);
+        }, 150);
+        viewWrapper.height(oldView.height());
+        oldView.addClass('changing ' + oldViewDirection);
+        newView.removeClass('changing');
+        viewWrapper.height('auto');
+        setTimeout(function(){
+            oldView.remove();
+        }, 300);
+        history.replaceState({}, '', url);
+        initDateTimePicker();
+    }
+
+    // handles the transition between pages
     $(document).on('click', 'a:not(.non-ajax)', function(e){
         e.preventDefault();
         var url = $(this).attr('href');
@@ -17,12 +42,8 @@ jQuery(document).ready(function($){
         if (url == window.location.href.replace(/^.*\/\/[^\/]+/, '')) {
             return;
         }
-        var response = $.ajax({
-            url: url
-        }).done(function(response){
-            $('.view-container').replaceWith(response);
-            history.replaceState({}, '', url);
-            initDateTimePicker();
+        var response = $.ajax({ url: url }).done(function(response){
+            updateViewport(response, url)
         });
         return false;
     });
@@ -149,10 +170,8 @@ jQuery(document).ready(function($){
         formData.push({ name: actionButton.attr('name'), value: actionButton.val() });
         actionButton.button('loading');
         var response = $.post(form.attr('action'), formData).done(function(response){
-            $('.view-container').replaceWith(response);
-            history.replaceState({}, '', window.location.href.replace('edit/', ''));
-            actionButton.button('reset');
-        }).fail(function(response){
+                updateViewport(response, window.location.href.replace('edit/', ''));
+            }).fail(function(response){
             var data = $.parseJSON(response.responseText);
             $('.alert', form).remove();
             for (i = 0; i < data.failed_inputs.length; i++) {
