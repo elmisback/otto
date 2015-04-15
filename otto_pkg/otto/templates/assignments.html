@@ -6,54 +6,60 @@
         {% if user.is_instructor %}
             <a href="{{ add_assignment_url }}" class="btn btn-success pull-right">Create Assignment</a>
         {% endif %}
-    </h2><!-- .page-title -->
-</div><!-- .page-header -->
+    </h2>
+</div>
+
 {% if user.is_instructor or enrolled %}
-    <div class="panel panel-default">
+    <div class="panel-assignments panel panel-default">
+
         <div class="panel-heading">
             <div class="row">
                 <div class="col-sm-4">Assignment Name</div>
                 <div class="col-sm-3">Date Posted</div>
                 <div class="col-sm-3">Date Due</div>
-            </div><!-- .row -->
-        </div><!-- .panel-heading -->
-        <ul class="list-group assignment-list">
+            </div>
+        </div>
+
+        <div class="assignment-list list-group">
             {% for assignment in assignments %}
-                <li class="list-group-item assignment" id="assignment-{{ assignment.id }}">
+                <div class="list-group-item assignment" id="assignment-{{ assignment.id }}">
                     <div class="row">
-                        <div class="col-sm-4 assignment-name">
-                            <a href="{{ assignment.assignment_url }}" title="{{ assignment.title }}">{{ assignment.title }}</a>
+                        <div class="assignment-name col-sm-4">
+                            <a href="{{ assignment.url }}" title="{{ assignment.title }}">{{ assignment.title }}</a>
                         </div><!-- .assignment-name -->
-                        <div class="col-sm-3 assignment-date-posted">
+                        <div class="assignment-date-posted col-sm-3">
                             {{ assignment.date_posted }}
                         </div><!-- .assignment-date-posted -->
-                        <div class="col-sm-3 assignment-date-due">
+                        <div class="assignment-date-due col-sm-3">
                             {{ assignment.date_due }}
                         </div><!-- .assignment-date-due -->
-                        <div class="col-sm-2 assignment-actions">
-                            <div class="static-actions pull-left">
-                            </div><!-- .static-actions -->
+                        <div class="assignment-actions col-sm-2">
                             <div class="fading-actions pull-right">
-                                {% if not user.is_instructor and not assignment.has_submission %}
-                                    <a href="{{ assignment.add_submission_url }}" class="btn btn-default btn-xs fading-button course-assignments-url"><span class="glyphicon glyphicon-open"></span> Submit</a>
-                                {% else %}
-                                    <a href="{{ assignment.edit_url }}" class="btn btn-default btn-xs fading-button ourse-students-url"><span class="glyphicon glyphicon-pencil"></span> Edit</a>
+                                {% if user.is_instructor %}
+                                    <a href="{{ assignment.edit_url }}" class="edit-url btn btn-default btn-xs fading-button"><span class="glyphicon glyphicon-pencil"></span> Edit</a>
                                 {% endif %}
                             </div><!-- .fading-actions -->
                         </div><!-- .assignment-actions -->
-                    </div><!-- .row -->
-                </li><!-- .list-group-item .course -->
+                    </div>
+                </div><!-- .assignment #assignment-{{ assignment.id }} -->
             {% empty %}
-                <li class="list-group-item assignment assignment-none">
+                <div class="assignment list-group-item" id="assignment-0">
                     <div class="row">
-                        <div class="col-sm-12 assignment-none-message">
-                            <span class="text-muted">This course does not have any assignments. <a href="{{ add_assignment_url }}">Add an assignment</a></span>
+                        <div class="col-sm-12">
+                            <span class="text-muted">There are no assignments for this course yet.</span>
                         </div>
-                    </div><!-- .row -->
-                </li><!-- .list-group-item .course -->
+                    </div>
+                </div><!-- .assignment #assignment-0 -->
             {% endfor %}
-        </ul><!-- .list-group -->
-    </div><!-- .panel .panel-default -->
+        </div><!-- .assignment-list -->
+
+    </div><!-- .panel-assignments -->
+
 {% else %}
-    <div class="alert alert-warning" role="alert"><span class="glyphicon glyphicon-exclamation-sign"></span> You are currently pending approval to view assignments from the instructor for this course.</div>
+
+    <div class="alert alert-warning" role="alert">
+        <span class="glyphicon glyphicon-exclamation-sign"></span>
+        You are currently pending approval to view assignments from the instructor for this course.
+    </div>
+
 {% endif %}

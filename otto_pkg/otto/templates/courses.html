@@ -3,116 +3,122 @@
         {% with breadcrumb|last as current_page %}
             {{ current_page.0 }}
         {% endwith %}
-        <button type="button" class="btn btn-success pull-right" data-toggle="modal" data-target="#addCourseModal">Add Course</button>
-    </h2><!-- .page-title -->
-</div><!-- .page-header -->
-<div class="panel panel-default">
+        <button type="button" class="btn btn-success pull-right" data-toggle="modal" data-target=".modal-add-course">Add Course</button>
+    </h2>
+</div>
+
+<div class="panel-courses panel panel-default">
+
     <div class="panel-heading">
         <div class="row">
             <div class="col-xs-2">ID</div>
             <div class="col-xs-5">Course Name</div>
-        </div><!-- .row -->
-    </div><!-- .panel-heading -->
-    <ul class="list-group course-list">
-        <li class="list-group-item course course-none">
+        </div>
+    </div>
+
+    <div class="course-list list-group">
+        <div class="course list-group-item" id="course-0">
             <div class="row">
-                <div class="col-xs-12 course-none-message">
-                    <span class="text-muted">You have not added any courses. <a href="#" role="button" data-toggle="modal" data-target="#addCourseModal">Add a course</a></span>
+                <div class="course-none-message col-sm-12">
+                    <span class="text-muted">There are no courses yet.</span>
                 </div><!-- .course-none-message -->
-                <div class="col-xs-2 course-id">
-                    <div></div>
+                <div class="course-id col-sm-2">
                 </div><!-- .course-id -->
-                <div class="col-xs-5 course-name"></div><!-- .course-name -->
-                <div class="col-xs-5 course-actions">
+                <div class="course-name col-sm-5">
+                </div><!-- .course-name -->
+                <div class="course-actions col-sm-5">
                     <div class="static-actions pull-left">
                         <div class="btn-group">
-                            <a href="#" class="btn btn-default btn-xs course-assignments-url"><span class="glyphicon glyphicon-file"></span> Assignments</a>
+                            <a href="#" class="course-assignments-url btn btn-default btn-xs "><span class="glyphicon glyphicon-file"></span> Assignments <span class="badge">0</span></a>
                             {% if user.is_instructor %}
-                                <a href="{{ course.students_url }}" class="btn btn-default btn-xs course-students-url"><span class="glyphicon glyphicon-user"></span> Students</a>
+                                <a href="#" class="course-students-url btn btn-default btn-xs "><span class="glyphicon glyphicon-user"></span> Students</a>
                             {% endif %}
-                        </div><!-- .btn-group -->
+                        </div>
                     </div><!-- .static-actions -->
                     <div class="fading-actions pull-right">
-                        <button class="btn btn-danger btn-xs pull-right course-remove fading-button" data-toggle="modal" data-target="#removeCourseModal"><span class="glyphicon glyphicon-trash"></span> Remove</button>
+                        <button class="course-remove btn btn-danger btn-xs pull-right" data-toggle="modal" data-target=".modal-remove-course"><span class="glyphicon glyphicon-trash"></span> Remove</button>
                     </div><!-- .fading-actions -->
                 </div><!-- .course-actions -->
-            </div><!-- .row -->
-        </li><!-- .list-group-item .course-none -->
+            </div>
+        </div><!-- .course #course-0 -->
         {% for course in courses %}
-            <li class="list-group-item course" id="course-{{ course.id }}" data-action="{{ course.course_url }}">
+            <div class="course list-group-item" id="course-{{ course.id }}" data-action="{{ course.course_url }}">
                 <div class="row">
-                    <div class="col-xs-2 course-id">
+                    <div class="course-id col-sm-2">
                         <div>{{ course.id }}</div>
                     </div><!-- .course-id -->
-                    <div class="col-xs-5 course-name">
-                        <a href="{{ course.assignments_url }}" title="{{ course.title }} - Assignments">{{ course.title }}</a>
+                    <div class="course-name col-sm-5">
+                        <a href="{{ course.assignments_url }}" title="{{ course.title }}">{{ course.title }}</a>
                     </div><!-- .course-name -->
-                    <div class="col-xs-5 course-actions">
+                    <div class="course-actions col-sm-5">
                         <div class="static-actions pull-left">
                             <div class="btn-group">
-                                <a href="{{ course.assignments_url }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-file"></span> Assignments</a>
-                                {% if user.is_instructor %}
-                                    <a href="{{ course.students_url }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-user"></span> Students {% if course.pending > 0 %}<span class="badge">{{ course.pending }}</span>{% endif %}</a>
+                                {% if course.is_enrolled %}
+                                    <a href="{{ course.assignments_url }}" class="course-assignments-url btn btn-default btn-xs"><span class="glyphicon glyphicon-file"></span> Assignments <span class="badge">{{ course.assignment_count }}</span></a>
                                 {% endif %}
-                            </div><!-- .btn-group -->
+                                {% if user.is_instructor %}
+                                    <a href="{{ course.students_url }}" class="course-students-url btn btn-xs {{ course.has_pending_students|yesno:'btn-warning,btn-default' }}"><span class="glyphicon glyphicon-user"></span> Students <span class="badge">{{ course.student_count }}</span></a>
+                                {% endif %}
+                            </div>
                         </div><!-- .static-actions -->
                         <div class="fading-actions pull-right">
-                            <button class="btn btn-danger btn-xs pull-right course-remove fading-button" data-toggle="modal" data-target="#removeCourseModal"><span class="glyphicon glyphicon-trash"></span> Remove</button>
+                            <button class="course-remove btn btn-danger btn-xs pull-right" data-toggle="modal" data-target=".modal-remove-course"><span class="glyphicon glyphicon-trash"></span> Remove</button>
                         </div><!-- .fading-actions -->
                     </div><!-- .course-actions -->
-                </div><!-- .row -->
-            </li><!-- .list-group-item .course -->
+                </div>
+            </div><!-- .course #course-{{ course.id }} -->
         {% endfor %}
-    </ul><!-- .list-group -->
-</div><!-- .panel .panel-default -->
+    </div><!-- .course-list -->
 
-<div class="modal fade" id="addCourseModal" tabindex="-1" role="dialog" aria-labelledby="addCourseModal" aria-hidden="true">
+</div><!-- .panel-courses -->
+
+<div class="modal-add-course modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="post" action="/courses/">
+            <form method="post" action="{{ courses_url }}">
                 {% csrf_token %}
                 <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                     <h4 class="modal-title">Add Course</h4>
-                </div><!-- .modal-header -->
+                </div>
                 <div class="modal-body">
                     <div class="form-group">
                         {% if user.is_instructor %}
                             <label for="course_title">Course Name</label>
-                            <input name="course_title" type="text" class="form-control" placeholder="e.g. Data Structures" required>
+                            <input name="course_title" type="text" class="form-control" placeholder="e.g. Data Structures">
                         {% else %}
                             <label for="course_id">Course ID</label>
-                            <input name="course_id" type="text" class="form-control" placeholder="e.g. 92491067" required>
+                            <input name="course_id" type="text" class="form-control" placeholder="e.g. 92491067">
                         {% endif %}
-                    </div><!-- .form-group -->
-                </div><!-- .modal-body -->
+                    </div>
+                </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default pull-left" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success" data-loading-text="Adding...">Add Course</button>
-                </div><!-- .modal-footer -->
+                    <button type="submit" class="btn btn-success" data-loading-text="Adding...">Add</button>
+                </div>
             </form>
-        </div><!-- .modal-content -->
-    </div><!-- .model-dialog -->
-</div><!-- .modal -->
+        </div>
+    </div>
+</div><!-- .modal-add-course -->
 
-<div class="modal fade" id="removeCourseModal" tabindex="-1" role="dialog" aria-labelledby="removeCourseModal" aria-hidden="true">
+<div class="modal-remove-course modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="post" action="/courses/">
+            <form method="post" action="{{ courses_url }}">
                 {% csrf_token %}
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                     <h4 class="modal-title">Confirm Remove Course</h4>
-                </div><!-- .modal-header -->
+                </div>
                 <div class="modal-body">
                     <p>This will permanently discard all data associated with <span class="course-title text-danger">this course</span>.</p>
-                    <input name="course_id" type="hidden">
-                </div><!-- .modal-body -->
+                    <input name="course_id" type="hidden" value="">
+                </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default pull-left" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger" data-loading-text="Removing...">Remove Course</button>
-                </div><!-- .modal-footer -->
+                    <button type="submit" class="btn btn-danger" data-loading-text="Removing...">Remove</button>
+                </div>
             </form>
-        </div><!-- .modal-content -->
-    </div><!-- .model-dialog -->
-</div><!-- .modal -->
+        </div>
+    </div>
+</div><!-- .modal-remove-course -->

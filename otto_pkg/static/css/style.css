@@ -17,38 +17,39 @@ body {
 }
 
 .site-footer {
-	margin-top: 50px;
+	padding: 50px 0;
 }
 
 .course-list .course:nth-of-type(2),
-.comment-list .comment:nth-of-type(2) {
+.submission-list .submission:nth-of-type(2) {
     border-top: 0;
 }
 
-.course-list .course-none,
-.assignment-list .assignment-none {
+.course-list #course-0,
+.assignment-list #assignment-0,
+.comment-list #comment-0,
+.submission-list #submission-0 {
     display: none;
 }
 
-.course-list .course-none:only-of-type,
-.assignment-list .assignment-none:only-of-type {
+.course-list #course-0:only-of-type,
+.assignment-list #assignment-0:only-of-type,
+.submission-list #submission-0:only-of-type {
     display: block;
 }
 
-.course-list .course-none .course-actions,
-.assignment-list .assignment-none .assignment-actions {
+.course-list #course-0 .course-actions,
+.assignment-list #assignment-0 .assignment-actions {
     display: none !important;
 }
 
 .course-list .course .fading-actions,
-.assignment-list .assignment .fading-actions,
-.submission .download {
+.assignment-list .assignment .fading-actions {
     visibility: hidden;
 }
 
 .course-list .course:hover .fading-actions,
-.assignment-list .assignment:hover .fading-actions,
-.submission:hover .download {
+.assignment-list .assignment:hover .fading-actions {
     visibility: visible;
 }
 
@@ -78,9 +79,19 @@ body {
 }
 
 .comment {
-    padding: 15px;
+    margin-bottom: 15px;
 }
 
 .comment .close {
     margin-top: -2px;
+}
+
+.comment-timestamp {
+    margin-left: 10px;
+}
+
+.comment-message {
+    margin-top: 5px;
+    overflow: hidden;
+    clear: both;
 }

@@ -27,19 +27,255 @@ jQuery(document).ready(function($){
         return false;
     });
 
+    // handles the uploading of new submissions on the 'assignment' view
+    $(document).on('submit', '.modal-upload-submission form', function(){
+        var form = $(this);
+        var data = new FormData();
+        var fileUpload = $('input[type="file"]');
+        var actionButton = $('button[type="submit"][data-clicked="true"]', form);
+        actionButton.button('loading');
+        $.each(fileUpload[0].files, function(key, value){
+            data.append(key, value);
+        });
+        if (fileUpload[0].files.length <= 0) {
+            $('.alert', form).remove();
+            $('.modal-body', form).append('<div class="alert alert-danger">Please choose a file to upload as your submission.</div>');
+            actionButton.button('reset');
+            return false;
+        }
+        var response = $.ajax({
+            method: 'POST',
+            url: form.attr('action'),
+            data: data,
+            cache: false,
+            contentType: false,
+            processData: false
+        }).done(function(response){
+            var data = $.parseJSON(response);
+            var url = form.attr('data-follow-up') + data + '/';
+            $.post(url, form.serialize()).done(function(response){
+                var data = $.parseJSON(response);
+                console.log(data);
+                $('.modal-upload-submission form').attr('action', data.upload_url);
+                if (data.replaced_submission) {
+                    var submission = $('#submission-' + data.replaced_submission);
+                    submission.attr('id', 'submission-' + data.submission.id);
+                    $('.download-url', submission).attr('href', data.submission.download_url);
+                    $('.submission-filename', submission).text(data.submission.filename);
+                    $('.submission-timestamp', submission).text(data.submission.timestamp);
+                } else {
+                    var submission = $('#submission-0');
+                    submission.attr('id', 'submission-' + data.submission.id);
+                    $('.no-submission-message', submission).remove();
+                    $('.download-url', submission).removeClass('hidden').attr('href', data.submission.download_url);
+                    $('.submission-author', submission).text(data.submission.author);
+                    $('.submission-filename', submission).text(data.submission.filename);
+                    $('.submission-timestamp', submission).text(data.submission.timestamp);
+                }
+                actionButton.button('reset');
+                form.closest('.modal').modal('hide');
+            }).fail(function(response){
+                var data = $.parseJSON(response.responseText);
+                $('.alert', form).remove();
+                if (data.message) {
+                    $('.modal-body', form).append('<div class="alert alert-danger">' + data.message + '</div>');
+                }
+                actionButton.button('reset');
+            });
+        }).fail(function(response){
+            $('.alert', form).remove();
+            $('.modal-body', form).append('<div class="alert alert-danger">There was a problem uploading your submission. Your filesize may be too large. Please try again.</div>');
+            actionButton.button('loading');
+        });
+        return false;
+    });
+    //     var form = $(this);
+    //     var formData = new FormData(form);
+    //     var actionButton = $('button[type="submit"][data-clicked="true"]', form);
+    //     actionButton.button('loading');
+    //     var response = $.ajax({
+    //         method: 'POST',
+    //         url: form.attr('action'),
+    //         data: formData,
+    //         cache: false,
+    //         processData: false
+    //     }).done(function(response){
+    //         console.log(response);
+    //         // $.post('/submit/' + response, form.serialize()).done(function(){
+    //         //     console.log('success again!');
+    //         // })
+    //         actionButton.button('reset');
+    //     });
+    //     // var response = $.post({
+    //     //     contentType: false,
+    //     //     processData: false,
+    //     //     url: form.attr('action'),
+    //     //     data: formData
+    //     // }).done(function(response){
+    //     //     var data = $.parseJSON(response);
+    //     //     console.log(data);
+    //     //     actionButton.button('reset');
+    //     // }).fail(function(response){
+    //     //     var data = $.parseJSON(response.responseText);
+    //     //     console.log(data);
+    //     //     actionButton.button('reset');
+    //     // });
+    //     return false;
+    // });
+
+    // handles the submission of new comments in the 'assignment' view
+    $(document).on('submit', '.comment-form', function(){
+        var form = $(this);
+        var formData = form.serializeArray();
+        var actionButton = $('button[type="submit"][data-clicked="true"]', form);
+        formData.push({ name: actionButton.attr('name'), value: actionButton.val() });
+        actionButton.button('loading');
+        var response = $.post(form.attr('action'), formData).done(function(response){
+            var data = $.parseJSON(response);
+            var newComment = $('#comment-0').clone(true);
+            newComment.hide().attr('id', 'comment-' + data.id);
+            $('.comment-author', newComment).text(data.author);
+            $('.comment-timestamp', newComment).text(data.timestamp);
+            $('.comment-message', newComment).text(data.message);
+            $('input[name="comment_id"]', newComment).val(data.id);
+            if (data.is_instructor) {
+                $('.comment-author', newComment).addClass('text-primary');
+            }
+            $('.comment-form').before(newComment);
+            newComment.fadeIn(300);
+            form.find('textarea[name="comment_message"]').val('');
+            $('.alert', form).remove();
+            actionButton.button('reset');
+        }).fail(function(response){
+            var data = $.parseJSON(response.responseText);
+            $('.alert', form).remove();
+            for (i = 0; i < data.failed_inputs.length; i++) {
+                var input = $('textarea[name="' + data.failed_inputs[i][0] + '"]', form);
+                input.parent().append('<div class="alert alert-danger" role="alert">' + data.failed_inputs[i][1] + '</div>');
+            }
+            actionButton.button('reset');
+        });
+        return false;
+    });
+
+    // handles the deletion of comments in the 'assignment' view
+    $(document).on('submit', '.delete-comment-form', function(){
+        var form = $(this);
+        var formData = form.serializeArray();
+        var actionButton = $('button[type="submit"][data-clicked="true"]', form);
+        formData.push({ name: actionButton.attr('name'), value: actionButton.val() });
+        var response = $.post(form.attr('action'), formData).done(function(response){
+            form.closest('.comment').fadeOut(300, function(){
+                $(this).remove();
+            });
+        });
+        return false;
+    });
+
+    // handles the submission of assignment edit form changes
+    $(document).on('submit', '.assignment_edit_form', function(){
+        var form = $(this);
+        var formData = form.serializeArray();
+        var actionButton = $('button[type="submit"][data-clicked="true"]', form);
+        formData.push({ name: actionButton.attr('name'), value: actionButton.val() });
+        actionButton.button('loading');
+        var response = $.post(form.attr('action'), formData).done(function(response){
+            $('.view-container').replaceWith(response);
+            history.replaceState({}, '', window.location.href.replace('edit/', ''));
+            actionButton.button('reset');
+        }).fail(function(response){
+            var data = $.parseJSON(response.responseText);
+            $('.alert', form).remove();
+            for (i = 0; i < data.failed_inputs.length; i++) {
+                $('[name="' + data.failed_inputs[i][0] + '"]', form).focus().parent().append('<div class="alert alert-danger" role="alert">' + data.failed_inputs[i][1] + '</div>');
+            }
+            actionButton.button('reset');
+        });
+        return false;
+    });
+
+    // handles the creation/addition of a new course in the 'courses' view
+    $(document).on('submit', '.modal-add-course form', function(){
+        var form = $(this);
+        var formData = form.serializeArray();
+        var actionButton = $('button[type="submit"][data-clicked="true"]', form);
+        formData.push({ name: actionButton.attr('name'), value: actionButton.val() });
+        actionButton.button('loading');
+        var response = $.post(form.attr('action'), formData).done(function(response){
+            var data = $.parseJSON(response);
+            var newRow = $('#course-0').clone(true).attr('id', 'course-' + data.course.id).attr('data-action', data.course.url).hide();
+            $('.course-none-message', newRow).remove();
+            $('.course-id', newRow).html('<div>' + data.course.id + '</div>');
+            $('.course-name', newRow).html('<a href="' + data.course.assignments_url + '" title="' + data.course.title + '">' + data.course.title + '</a>');
+            $('.course-assignments-url', newRow).attr('href', data.course.assignments_url);
+            $('.course-students-url', newRow).attr('href', data.course.students_url);
+            $('.course-list').append(newRow);
+            newRow.slideToggle(300);
+            actionButton.button('reset');
+            form.closest('.modal').modal('hide');
+        }).fail(function(response){
+            var data = $.parseJSON(response.responseText);
+            $('.alert', form).remove();
+            for (i = 0; i < data.failed_inputs.length; i++) {
+                $('[name="' + data.failed_inputs[i][0] + '"]', form).focus().after('<div class="alert alert-danger" role="alert">' + data.failed_inputs[i][1] + '</div>').show();
+            }
+            actionButton.button('reset');
+        });
+        return false;
+    });
+
+    // handles the approval/disapproval of students in the 'students' view
+    $(document).on('submit', '.approve-student-form, .unapprove-student-form', function(){
+        var form = $(this);
+        var formData = form.serializeArray();
+        var actionButton = $('button[type="submit"][data-clicked="true"]', form);
+        formData.push({ name: actionButton.attr('name'), value: actionButton.val() });
+        actionButton.button('loading');
+        var response = $.post(form.attr('action'), formData).done(function(response){
+            var targetRow = form.closest('.student');
+            if (targetRow.hasClass('student-approved')) {
+                targetRow.removeClass('student-approved').addClass('student-unapproved list-group-item-warning');
+            } else {
+                targetRow.removeClass('student-unapproved list-group-item-warning').addClass('student-approved');
+            }
+            actionButton.button('reset');
+        });
+        return false;
+    });
+
+    // handles the removal of courses from the 'courses' view
+    $(document).on('submit', '.modal-remove-course form', function(){
+        var form = $(this);
+        var formData = form.serializeArray();
+        var actionButton = $('button[type="submit"][data-clicked="true"]', form);
+        formData.push({ name: actionButton.attr('name'), value: actionButton.val() });
+        actionButton.button('loading');
+        var response = $.post(form.attr('action'), formData).done(function(response){
+            var target = $('input[name="course_id"]', form).val();
+            $('#course-' + target).slideToggle(300, function(){
+                $(this).remove();
+            });
+            actionButton.button('reset');
+            form.closest('.modal').modal('hide');
+        });
+        return false;
+    });
+
+    // handles identifying which button submitted the form
     $(document).on('click', 'form button[type="submit"]', function(){
-        $('button[type="submit"]', $(this).closest('form')).removeAttr('data-clicked');
+        var form = $(this).closest('form');
+        $('button[type="submit"]', form).removeAttr('data-clicked');
         $(this).attr('data-clicked', 'true');
     });
 
-    // 'Courses' view scripts
-
-    $(document).on('shown.bs.modal', '#addCourseModal', function(){
+    // handles the highlighting of the target field in modals on 'courses' view
+    $(document).on('shown.bs.modal', '.modal-add-course', function(){
         $('input[name="course_title"]', this).focus();
         $('input[name="course_id"]', this).focus();
     });
 
-    $(document).on('show.bs.modal', '#removeCourseModal', function(e){
+    // handles the filling out of course removal confirmation input fields
+    $(document).on('show.bs.modal', '.modal-remove-course', function(e){
         var target = $(e.relatedTarget);
         var targetRow = target.closest('.course');
         var courseName = $('.course-name', targetRow);
@@ -49,141 +285,11 @@ jQuery(document).ready(function($){
         $('form', this).attr('action', targetRow.attr('data-action'));
     });
 
-    $(document).on('hidden.bs.modal', '#addCourseModal', function(){
+    // handles clearing the fields in modals on successful course addition
+    $(document).on('hidden.bs.modal', '.modal-add-course', function(){
         $('.alert', this).remove();
         $('input[name="course_title"]', this).val('');
         $('input[name="course_id"]', this).val('');
     });
-
-    $(document).on('submit', '.comment-form', function(){
-        var form = $(this);
-        var formData = form.serializeArray();
-        var actionButton = $('button[type="submit"][data-clicked="true"]', form);
-        formData.push({ name: actionButton.attr('name'), value: actionButton.val() });
-        actionButton.button('loading');
-        var response = $.post(form.attr('action'), formData).done(function(response){
-            var data = $.parseJSON(response);
-            var newComment = $('#comment-0').clone();
-            newComment.removeClass('hidden').hide().attr('id', 'comment-' + data.id);
-            $('.comment-author', newComment).text(data.author);
-            $('.comment-timestamp', newComment).text(data.timestamp);
-            $('.comment-message', newComment).text(data.message);
-            $('input[name="comment_id"]', newComment).val(data.id);
-            if (data.is_instructor) {
-                newComment.addClass('text-info');
-            }
-            $('.comment-list').append(newComment);
-            newComment.slideToggle(300);
-            form.find('textarea[name="comment_message"]').val('');
-            $('.alert', form).remove();
-        }).fail(function(response){
-            var data = $.parseJSON(response.responseText);
-            $('.alert', form).remove();
-            for (i = 0; i < data.failed_inputs.length; i++) {
-                var input = $('textarea[name="' + data.failed_inputs[i][0] + '"]', form);
-                input.parent().append('<div class="alert alert-danger" role="alert">' + data.failed_inputs[i][1] + '</div>');
-            }
-        });
-        actionButton.button('reset');
-        return false;
-    });
-
-    $(document).on('submit', '.delete-comment-form', function(){
-        var form = $(this);
-        var formData = form.serializeArray();
-        var actionButton = $('button[type="submit"][data-clicked="true"]', form);
-        formData.push({ name: actionButton.attr('name'), value: actionButton.val() });
-        var response = $.post(form.attr('action'), formData).done(function(response){
-            form.closest('.comment').slideToggle(300, function(){
-                $(this).remove();
-            });
-        });
-        return false;
-    });
-
-    $(document).on('submit', '.edit_assignment_form', function(){
-        var form = $(this);
-        var formData = form.serializeArray();
-        var actionButton = $('button[type="submit"][data-clicked="true"]', form);
-        formData.push({ name: actionButton.attr('name'), value: actionButton.val() });
-        actionButton.button('loading');
-        var response = $.post(form.attr('action'), formData).done(function(response){
-            $('.view-container').replaceWith(response);
-            history.replaceState({}, '', window.location.href.replace('edit/', ''));
-        }).fail(function(response){
-            var data = $.parseJSON(response.responseText);
-            $('.alert', form).remove();
-            for (i = 0; i < data.failed_inputs.length; i++) {
-                var input = $('input[name="' + data.failed_inputs[i][0] + '"]', form);
-                input.parent().append('<div class="alert alert-danger" role="alert">' + data.failed_inputs[i][1] + '</div>');
-            }
-        });
-        actionButton.button('reset');
-        return false;
-    });
-
-    $(document).on('submit', '#addCourseModal form', function(){
-        var form = $(this);
-        var formData = form.serialize();
-        var actionButton = $('button[type="submit"]', form);
-        actionButton.button('loading');
-        var response = $.post(form.attr('action'), formData).done(function(response){
-            var data = $.parseJSON(response);
-            var newRow = $('.course-list .course').eq(0).clone(true).removeClass('course-none').attr('id', 'course-' + data.id).attr('data-action', data.course_url).hide();
-            $('.course-none-message', newRow).remove();
-            $('.course-id', newRow).html('<div>' + data.id + '</div>');
-            $('.course-name', newRow).html('<a href="' + data.assignments_url + '" title="' + data.title + ' - Assignments">' + data.title + '</a>');
-            $('.course-assignments-url', newRow).attr('href', data.assignments_url);
-            $('.course-students-url', newRow).attr('href', data.students_url);
-            $('.course-list').append(newRow);
-            newRow.slideToggle(300);
-            form.closest('.modal').modal('hide');
-        }).fail(function(response){
-            var data = $.parseJSON(response.responseText);
-            var alert = $('.modal-body .alert', form);
-            if (alert.length > 0) {
-                alert.text(data.message);
-            } else {
-                $('.modal-body', form).append('<div class="alert alert-danger" role="alert">' + data.message + '</div>').show();
-            }
-            $('input[name="course_title"]', form).focus();
-            $('input[name="course_id"]', form).focus();
-        });
-        actionButton.button('reset');
-        return false;
-    });
-
-    $(document).on('submit', '#removeCourseModal form', function(){
-        var form = $(this);
-        var formData = form.serialize();
-        var actionButton = $('button[type="submit"]', form);
-        actionButton.button('loading');
-        var response = $.post(form.attr('action'), formData).done(function(response){
-            var target = $('input[name="course_id"]', form).val();
-            $('#course-' + target).slideToggle(300, function(){
-                $(this).remove();
-            });
-            form.closest('.modal').modal('hide');
-        });
-        actionButton.button('reset');
-        return false;
-    });
-
-    $(document).on('submit', '.approve-student-form, .unapprove-student-form, .approve-students-form', function(){
-        var form = $(this);
-        var formData = form.serialize();
-        var actionButton = $('button[type="submit"]', form);
-        actionButton.button('loading');
-        var response = $.post(form.attr('action'), formData).done(function(response){
-            var targetRow = form.closest('.student');
-            if (targetRow.hasClass('student-approved')) {
-                targetRow.removeClass('student-approved').addClass('student-unapproved list-group-item-warning');
-            } else {
-                targetRow.removeClass('student-unapproved list-group-item-warning').addClass('student-approved');
-            }
-        });
-        actionButton.button('reset');
-        return false;
-    })
 
 });

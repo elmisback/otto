@@ -34,9 +34,10 @@ class Comment(ndb.Model):
 
 class Submission(ndb.Model):
     student = ndb.KeyProperty(kind='User')
-    file_blob = ndb.BlobKeyProperty()  # uses blobstore for files
+    assignment = ndb.KeyProperty(kind='Assignment')
+    file_blob = ndb.BlobKeyProperty()
     filename = ndb.StringProperty(indexed=False)
-    time = ndb.DateTimeProperty(auto_now_add=True)
+    date_posted = ndb.DateTimeProperty(auto_now_add=True)
 
 
 class Assignment(ndb.Model):
