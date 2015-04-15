@@ -7,11 +7,11 @@
             <ul class="nav navbar-nav">
                 {% include 'notifications.html' %}
                 <li class="dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+                    <a href="#" class="dropdown-toggle non-ajax" data-toggle="dropdown" role="button" aria-expanded="false">
                         Signed in as {{ user_name }} <span class="caret"></span></span>
                     </a>
                     <ul class="dropdown-menu" role="menu">
-                        <li><a href="{{ logout_url }}" title="Sign out of Otto">Sign out</a></li>
+                        <li><a class="non-ajax" href="{{ logout_url }}" title="Sign out of Otto">Sign out</a></li>
                     </ul>
                 </li>
             </ul><!-- .nav .navbar-nav -->
