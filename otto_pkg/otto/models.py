@@ -9,7 +9,7 @@ from views import *
 class User(ndb.Model):
     nickname = ndb.StringProperty(indexed=False)
     courses = ndb.KeyProperty(kind='Course', repeated=True)
-    notifications = ndb.KeyProperty(kind='Notification')
+    notifications = ndb.KeyProperty(kind='Notification', repeated=True)
     is_instructor = ndb.BooleanProperty()
 
     def add_course(self, course):
@@ -23,8 +23,7 @@ class User(ndb.Model):
 class Notification(ndb.Model):
     message = ndb.StringProperty(indexed=False)
     target_url = ndb.StringProperty(indexed=False)
-    unread = ndb.BooleanProperty()
-    creation_time = ndb.DateTimeProperty(auto_now_add=True)
+    timestamp = ndb.DateTimeProperty(auto_now_add=True)
 
 
 class Comment(ndb.Model):
@@ -109,15 +108,18 @@ class Course(ndb.Model):
     assignments = ndb.KeyProperty(kind='Assignment', repeated=True)
     students_enrolled = ndb.KeyProperty(kind='User', repeated=True)
     students_pending = ndb.KeyProperty(kind='User', repeated=True)
-    instructors = ndb.StringProperty(repeated=True)
+    instructor = ndb.KeyProperty(kind='User')
     notifications = ndb.KeyProperty(kind='Notification', repeated=True)
 
     @classmethod
     @ndb.transactional(xg=True)
     def _create_course(cls, course_title):
         digits = 8
+        current_user = get_current_user()
+        user_key = ndb.Key(User, current_user.user_id())
+        user = user_key.get()
         course = cls(title=course_title, id=cls.generate_id(digits),
-                     instructors=[get_current_user().nickname()])
+                     instructor=user_key)
         course.put()
         return course
 

@@ -23,6 +23,14 @@ body {
     position: relative;
 }
 
+.notifications-list {
+    width: 400px;
+}
+
+.notifications-list a {
+    white-space: normal !important;
+}
+
 .view-container {
     -webkit-transition: -webkit-transform .3s ease-in-out, opacity .3s ease-in-out;
     transition: transform .3s ease-in-out, opacity .3s ease-in-out;

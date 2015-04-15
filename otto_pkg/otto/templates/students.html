@@ -18,13 +18,13 @@
                             {% csrf_token %}
                             <input type="hidden" name="student_id" value="{{ student.id }}">
                             <input type="hidden" name="action_type" value="approve">
-                            <button type="submit" class="btn btn-success btn-xs pull-right" data-loading="Approving..."><span class="glyphicon glyphicon-ok"></span> Approve</button>
+                            <button type="submit" class="btn btn-success btn-xs pull-right" data-loading-text="Approving..."><span class="glyphicon glyphicon-ok"></span> Approve</button>
                         </form><!-- .approve-student-form -->
                         <form class="unapprove-student-form" method="post" action="{{ students_url }}">
                             {% csrf_token %}
                             <input type="hidden" name="student_id" value="{{ student.id }}">
                             <input type="hidden" name="action_type" value="unapprove">
-                            <button type="submit" class="btn btn-default btn-xs pull-right" data-loading="Unapproving..."><span class="glyphicon glyphicon-remove"></span> Unapprove</button>
+                            <button type="submit" class="btn btn-default btn-xs pull-right" data-loading-text="Unapproving..."><span class="glyphicon glyphicon-remove"></span> Unapprove</button>
                         </form><!-- .unapprove-student-form -->
                     </div><!-- .student-actions -->
                 </div><!-- .row -->

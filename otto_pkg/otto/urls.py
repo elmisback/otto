@@ -4,7 +4,8 @@ import views
 urlpatterns = patterns(
     '',
     url(r'^$', views.login_view),
-    # url(r'^notifications/$', views.notifications_view),
+    url(r'^notifications/$', views.notifications_view),
+    url(r'^notifications/clear/$', views.notifications_clear_view),
     url(r'^courses/$', views.courses_view),
     url(r'^courses/(?P<course_id>\d{8})/$', views.course_view),
     url(r'^courses/(?P<course_id>\d{8})/students/$', views.students_view),

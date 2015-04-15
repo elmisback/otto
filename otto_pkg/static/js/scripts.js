@@ -280,4 +280,28 @@ jQuery(document).ready(function($){
         $('input[name="course_id"]', this).val('');
     });
 
+    // handles the closing of dropdowns
+    $(document).on('click', '.notifications-dropdown a', function(){
+        $(this).closest('.notifications-list').dropdown('toggle');
+    });
+
+    $(document).on('click', '.clear-notifications', function(){
+        var response = $.ajax({ url: '/notifications/clear/' });
+        $('.notification:not(.no-notifications)').remove();
+        $('.notifications-dropdown .badge').text(0);
+        if ($('.no-notifications').length <= 0) {
+            $('.notifications-list').prepend('<li class="notification no-notifications"><a href="#" class="non-ajax">There are no notifications at this time.</a></li>');
+        }
+        return false;
+    });
+
+    // setTimeout(function(){
+    //     var response = $.ajax({ url: '/notifications/' }).done(function(response){
+    //         var data = $.JSONparse(response);
+    //         for (i = 0; i < data.notifications; i++) {
+
+    //         }
+    //     });
+    // }, 5000);
+
 });

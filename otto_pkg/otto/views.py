@@ -134,12 +134,35 @@ def login_view(request):
     return redirect(reverse(courses_view))
 
 
-# @is_logged_in
-# def notifications_view(request, **kwargs):
-#     current_user = get_current_user()
-#     user_key = ndb.Key(User, current_user.user_id())
-#     user = user_key.get()
+@is_logged_in
+def notifications_view(request, **kwargs):
+    current_user = get_current_user()
+    user_key = ndb.Key(User, current_user.user_id())
+    user = user_key.get()
+    if request.is_ajax():
+        if request.method == 'GET':
+            notifications = get_notifications(user)
+            response = HttpResponse()
+            response.status_code = 200
+            response.content_type = 'application/json'
+            response.content = json.dumps({
+                'notifications': notifications
+            })
+            return response
+        else:
+            user.notifications = []
+            user.put()
+    return HttpResponse()
 
+
+@is_logged_in
+def notifications_clear_view(request, **kwargs):
+    current_user = get_current_user()
+    user_key = ndb.Key(User, current_user.user_id())
+    user = user_key.get()
+    user.notifications = []
+    user.put()
+    return HttpResponse()
 
 
 @is_logged_in
@@ -178,6 +201,12 @@ def submit_view(request, **kwargs):
     course = Course.get_by_id(course_id)
     assignment_id = kwargs['assignment_id']
     assignment = Assignment.get_by_id(assignment_id)
+    assignment_url = reverse(
+        assignment_view, kwargs={
+            'course_id': kwargs['course_id'],
+            'assignment_id': kwargs['assignment_id']
+        }
+    )
     response = HttpResponse()
     response.status_code = 200
     response.content_type = 'application/json'
@@ -206,6 +235,16 @@ def submit_view(request, **kwargs):
                     submission_key.delete()
             assignment.submissions.append(submission.key)
             assignment.put()
+            notification = Notification(
+                message='{} uploaded a new submission for {}.'.format(user.nickname, assignment.title),
+                target_url=assignment_url,
+                timestamp=datetime.now() - timedelta(hours=4)
+            )
+            notification.put()
+            instructor = course.instructor.get()
+            if instructor is not None:
+                instructor.notifications.insert(0, notification.key)
+                instructor.put()
             submission.assignment = assignment.key
             submission.put()
         else:
@@ -253,7 +292,8 @@ def assignment_edit_view(request, **kwargs):
             ('Courses', courses_url),
             (course.title, assignments_url),
             ('Assignments', assignments_url)
-        ]
+        ],
+        'notifications': get_notifications(user),
     }
     assignment_id = kwargs['assignment_id']
     assignment = Assignment.get_by_id(assignment_id)
@@ -309,6 +349,16 @@ def assignment_edit_view(request, **kwargs):
             course.put()
             logging.info(course.assignments)
             assignment.put()
+            notification = Notification(
+                message='{} in {} has been posted.'.format(assignment.title, course.title),
+                target_url=assignment_url,
+                timestamp=datetime.now() - timedelta(hours=4)
+            )
+            notification.put()
+            for student_key in course.students_enrolled:
+                student = student_key.get()
+                student.notifications.insert(0, notification.key)
+                student.put()
             return redirect(assignment_url)
         else:
             logging.info('Assignment exists. Updating fields with data.')
@@ -316,6 +366,16 @@ def assignment_edit_view(request, **kwargs):
             assignment.date_due = assignment_due_date
             assignment.description = soup.renderContents()
             assignment.put()
+            notification = Notification(
+                message='{} in {} has been updated.'.format(assignment.title, course.title),
+                target_url=assignment_url,
+                timestamp=datetime.now() - timedelta(hours=4)
+            )
+            notification.put()
+            for student_key in course.students_enrolled:
+                student = student_key.get()
+                student.notifications.insert(0, notification.key)
+                student.put()
             return redirect(assignment_url)
     else:
         logging.info('Processing a GET request on edit assignment page.')
@@ -378,6 +438,7 @@ def assignment_view(request, **kwargs):
             ('Assignments', assignments_url),
             (assignment.title, '')
         ],
+        'notifications': get_notifications(user),
         'upload_url': blobstore.create_upload_url('/upload/'),
         'submit_url': '{}submit/'.format(assignment_url),
         'assignment_url': assignment_url,
@@ -413,6 +474,22 @@ def assignment_view(request, **kwargs):
             assignment.comments.append(comment.key)
             logging.info(assignment.comments)
             assignment.put()
+            notification = Notification(
+                message='{} posted a comment on {} in {}.'.format(user.nickname, assignment.title, course.title),
+                target_url=assignment_url,
+                timestamp=datetime.now() - timedelta(hours=4)
+            )
+            notification.put()
+            for student_key in course.students_enrolled:
+                if student_key != user_key:
+                    student = student_key.get()
+                    student.notifications.insert(0, notification.key)
+                    student.put()
+            instructor = course.instructor.get()
+            if instructor is not None:
+                if instructor.key != user_key:
+                    instructor.notifications.insert(0, notification.key)
+                    instructor.put()
             response.content = json.dumps(get_comment(comment, user))
             logging.info('Returning the comment object.')
             return response
@@ -463,6 +540,7 @@ def assignments_view(request, **kwargs):
             (course.title, assignments_url),
             ('Assignments', assignments_url)
         ],
+        'notifications': get_notifications(user),
         'add_assignment_url': add_assignment_url,
         'assignments': get_assignments(course, user),
         'enrolled': not user.is_instructor and user_key in course.students_enrolled
@@ -500,6 +578,7 @@ def students_view(request, **kwargs):
             (course.title, assignments_url),
             ('Students', students_url)
         ],
+        'notifications': get_notifications(user),
         'students_url': students_url
     }
     if not user.is_instructor:
@@ -515,6 +594,19 @@ def students_view(request, **kwargs):
                 student = User.get_by_id(student_id)
                 if action_type == 'approve':
                     course.approve_student(student)
+                    assignments_url = reverse(
+                        assignments_view, kwargs={
+                            'course_id': course_id
+                        }
+                    )
+                    notification = Notification(
+                        message='You have been approved for {}.'.format(course.title),
+                        target_url=assignments_url,
+                        timestamp=datetime.now() - timedelta(hours=4)
+                    )
+                    notification.put()
+                    student.notifications.insert(0, notification.key)
+                    student.put()
                 else:
                     course.unapprove_student(student)
             else:
@@ -575,6 +667,7 @@ def courses_view(request, **kwargs):
         'breadcrumb': [
             ('Courses', courses_url)
         ],
+        'notifications': get_notifications(user),
         'courses_url': courses_url,
         'courses': get_courses(user)
     }
@@ -647,6 +740,21 @@ def courses_view(request, **kwargs):
                 user.put()
                 course.add_student(user)
                 course.put()
+                students_url = reverse(
+                    students_view, kwargs={
+                        'course_id': course_id
+                    }
+                )
+                notification = Notification(
+                    message='{} is requesting permission to join {}.'.format(user.nickname, course.title),
+                    target_url=students_url,
+                    timestamp=datetime.now() - timedelta(hours=4)
+                )
+                notification.put()
+                instructor = course.instructor.get()
+                if instructor is not None:
+                    instructor.notifications.insert(0, notification.key)
+                    instructor.put()
                 response.content = json.dumps({
                     'course': get_course(course, user)
                 })
@@ -655,6 +763,33 @@ def courses_view(request, **kwargs):
             return render(request, 'view.html', context)
     else:
         return render(request, 'base.html', context)
+
+
+# Returns a list of parsed notification attributes for a specified notification.
+def get_notifications(user):
+    notifications = []
+    for notification_key in user.notifications:
+        notification = notification_key.get()
+        if notification is not None:
+            notification_obj = get_notification(notification)
+            if notification_obj is not None:
+                notifications.insert(0, notification_obj)
+        else:
+            pass
+            # notification_key.delete()
+    return notifications
+
+
+# Returns a parsed notification attribute object for a specified notification.
+def get_notification(notification):
+    notification_obj = {}
+    if notification is not None:
+        notification_obj = {
+            'message': notification.message,
+            'target_url': notification.target_url,
+            'timestamp': get_timestamp(notification.timestamp)
+        }
+    return notification_obj
 
 
 # Returns a list of parsed submission attributes for a specified assignment.
