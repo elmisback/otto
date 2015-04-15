@@ -6,6 +6,20 @@ body {
 	padding-top: 70px;
 }
 
+html.login,
+html.login body {
+    height: 100%;
+}
+
+.login-logo {
+    font-size: 72px;
+}
+
+.login-tagline {
+    font-weight: 300;
+    margin-bottom: 50px;
+}
+
 .view-container-wrapper {
     position: relative;
 }

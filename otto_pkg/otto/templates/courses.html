@@ -29,8 +29,8 @@
                 <div class="course-actions col-sm-5">
                     <div class="static-actions pull-left">
                         <div class="btn-group">
-                            <a href="#" class="course-assignments-url btn btn-default btn-xs "><span class="glyphicon glyphicon-file"></span> Assignments <span class="badge">0</span></a>
                             {% if user.is_instructor %}
+                                <a href="#" class="course-assignments-url btn btn-default btn-xs "><span class="glyphicon glyphicon-file"></span> Assignments <span class="badge">0</span></a>
                                 <a href="#" class="course-students-url btn btn-default btn-xs "><span class="glyphicon glyphicon-user"></span> Students</a>
                             {% endif %}
                         </div>

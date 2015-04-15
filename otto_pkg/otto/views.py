@@ -134,6 +134,14 @@ def login_view(request):
     return redirect(reverse(courses_view))
 
 
+# @is_logged_in
+# def notifications_view(request, **kwargs):
+#     current_user = get_current_user()
+#     user_key = ndb.Key(User, current_user.user_id())
+#     user = user_key.get()
+
+
+
 @is_logged_in
 @is_valid_course
 @is_valid_assignment

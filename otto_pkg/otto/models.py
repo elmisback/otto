@@ -9,6 +9,7 @@ from views import *
 class User(ndb.Model):
     nickname = ndb.StringProperty(indexed=False)
     courses = ndb.KeyProperty(kind='Course', repeated=True)
+    notifications = ndb.KeyProperty(kind='Notification')
     is_instructor = ndb.BooleanProperty()
 
     def add_course(self, course):

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="login">
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -15,13 +15,15 @@
         <![endif]-->
     </head>
     <body>
-        {% include 'header.html' %}
         <div class="container">
 			<div class="row">
-				<div class="col-md-8">
-					<h1>Submit your assignments seamlessly to your course instructor.</h1>
+				<div class="col-md-6 col-md-offset-3 text-center">
+                    <h1 class="login-logo">Otto</h1>
+					<h3 class="login-tagline">Submit your assignments seamlessly to your course instructor.</h3>
 				</div>
-				<div class="col-md-4">
+            </div>
+            <div class="row">
+				<div class="col-md-6 col-md-offset-3">
                     <div class="jumbotron text-center">
                         <p>Sign in</p>
                         <a class="btn-lg btn-social btn-google-plus" href="{{login_url}}"
@@ -33,9 +35,5 @@
 				</div>
 			</div><!-- .row -->
 		</div><!-- .container -->
-        {% include 'footer.html' %}
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-        <script src="/js/bootstrap.min.js"></script>
-        <script src="/js/history.js"></script>
     </body>
 </html>
