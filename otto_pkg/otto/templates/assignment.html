@@ -105,7 +105,7 @@
                 {% empty %}
                     <li class="submission list-group-item" id="submission-0">
                         <span class="no-submission-message text-muted">
-                            {% if user.is_instrcutor %}
+                            {% if user.is_instructor %}
                                 {{ can_submit|yesno:'There are no submissions yet.,No submissions have been uploaded before the deadline.' }}
                             {% else %}
                                 {{ can_submit|yesno:'You have not uploaded a submission yet.,You did not upload a submission before the deadline.' }}
