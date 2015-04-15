@@ -24,8 +24,6 @@ body {
 }
 
 .fading-left {
-/*    -webkit-transition: -webkit-transform .3s ease-in-out, opacity .3s ease-in-out;
-    transition: transform .3s ease-in-out, opacity .3s ease-in-out;*/
     -webkit-transform: translateX(-100px);
     transform: translateX(-100px);
     opacity: 0;

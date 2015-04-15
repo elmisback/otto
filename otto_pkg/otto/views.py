@@ -396,7 +396,11 @@ def assignment_view(request, **kwargs):
                     'failed_inputs': failed_inputs
                 })
                 return response
-            comment = Comment(message=comment_message, poster=user_key)
+            comment = Comment(
+                message=comment_message,
+                poster=user_key,
+                date_posted=datetime.now() - timedelta(hours=4)
+            )
             comment.put()
             assignment.comments.append(comment.key)
             logging.info(assignment.comments)
