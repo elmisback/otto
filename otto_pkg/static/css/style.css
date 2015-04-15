@@ -6,9 +6,8 @@ body {
 	padding-top: 70px;
 }
 
-html.login,
-html.login body {
-    height: 100%;
+.register-form .btn {
+    display: inline-block;
 }
 
 .login-logo {
