@@ -281,10 +281,11 @@ jQuery(document).ready(function($){
     });
 
     // handles the closing of dropdowns
-    $(document).on('click', '.notifications-dropdown a', function(){
+    $(document).on('click', '.notifications-dropdown a:not(.clear-notifications)', function(){
         $(this).closest('.notifications-list').dropdown('toggle');
     });
 
+    //
     $(document).on('click', '.clear-notifications', function(){
         var response = $.ajax({ url: '/notifications/clear/' });
         $('.notification:not(.no-notifications)').remove();
