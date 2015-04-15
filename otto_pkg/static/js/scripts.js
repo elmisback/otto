@@ -10,7 +10,7 @@ jQuery(document).ready(function($){
         });
     }
 
-    $(document).on('click', 'a', function(e){
+    $(document).on('click', 'a:not(.non-ajax)', function(e){
         e.preventDefault();
         var url = $(this).attr('href');
         // don't load the page if it's the same one
@@ -63,14 +63,16 @@ jQuery(document).ready(function($){
                     $('.download-url', submission).attr('href', data.submission.download_url);
                     $('.submission-filename', submission).text(data.submission.filename);
                     $('.submission-timestamp', submission).text(data.submission.timestamp);
+                    $('.hidden', submission).removeClass('hidden');
                 } else {
                     var submission = $('#submission-0');
                     submission.attr('id', 'submission-' + data.submission.id);
                     $('.no-submission-message', submission).remove();
-                    $('.download-url', submission).removeClass('hidden').attr('href', data.submission.download_url);
+                    $('.download-url', submission).attr('href', data.submission.download_url);
                     $('.submission-author', submission).text(data.submission.author);
                     $('.submission-filename', submission).text(data.submission.filename);
                     $('.submission-timestamp', submission).text(data.submission.timestamp);
+                    $('.hidden', submission).removeClass('hidden');
                 }
                 actionButton.button('reset');
                 form.closest('.modal').modal('hide');
@@ -89,39 +91,6 @@ jQuery(document).ready(function($){
         });
         return false;
     });
-    //     var form = $(this);
-    //     var formData = new FormData(form);
-    //     var actionButton = $('button[type="submit"][data-clicked="true"]', form);
-    //     actionButton.button('loading');
-    //     var response = $.ajax({
-    //         method: 'POST',
-    //         url: form.attr('action'),
-    //         data: formData,
-    //         cache: false,
-    //         processData: false
-    //     }).done(function(response){
-    //         console.log(response);
-    //         // $.post('/submit/' + response, form.serialize()).done(function(){
-    //         //     console.log('success again!');
-    //         // })
-    //         actionButton.button('reset');
-    //     });
-    //     // var response = $.post({
-    //     //     contentType: false,
-    //     //     processData: false,
-    //     //     url: form.attr('action'),
-    //     //     data: formData
-    //     // }).done(function(response){
-    //     //     var data = $.parseJSON(response);
-    //     //     console.log(data);
-    //     //     actionButton.button('reset');
-    //     // }).fail(function(response){
-    //     //     var data = $.parseJSON(response.responseText);
-    //     //     console.log(data);
-    //     //     actionButton.button('reset');
-    //     // });
-    //     return false;
-    // });
 
     // handles the submission of new comments in the 'assignment' view
     $(document).on('submit', '.comment-form', function(){

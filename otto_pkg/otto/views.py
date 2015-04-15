@@ -377,7 +377,8 @@ def assignment_view(request, **kwargs):
         'assignment': get_assignment(assignment, course),
         'submissions': get_submissions(course, assignment, user),
         'comments': get_comments(assignment, user),
-        'has_submission': user_key in [x.get().student for x in assignment.submissions]
+        'has_submission': user_key in [x.get().student for x in assignment.submissions],
+        'can_submit': assignment.date_due > datetime.now() - timedelta(hours=4)
     }
     if request.method == 'POST':
         if 'submit_comment' in request.POST:

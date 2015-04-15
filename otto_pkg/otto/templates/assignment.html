@@ -93,21 +93,27 @@
         </div><!-- .panel-date-due -->
 
         <div class="panel-submissions panel panel-default">
-            <div class="panel-heading">Submissions {% if not user.is_instructor %}<button data-toggle="modal" data-target=".modal-upload-submission" class="btn btn-xs btn-success pull-right"><span class="glyphicon glyphicon-open"></span> {{ has_submission|yesno:'Resubmit,Submit' }}</button>{% endif %}</div>
+            <div class="panel-heading">Submissions {% if not user.is_instructor and can_submit %}<button data-toggle="modal" data-target=".modal-upload-submission" class="btn btn-xs btn-success pull-right"><span class="glyphicon glyphicon-open"></span> {{ has_submission|yesno:'Resubmit,Submit' }}</button>{% endif %}</div>
             <ul class="submission-list list-group">
                 {% for submission in submissions %}
                     <li class="submission list-group-item" id="submission-{{ submission.id }}">
-                        <a href="{{ submission.download_url }}" class="download-url btn btn-xs btn-default pull-right"><span class="glyphicon glyphicon-save"></span> Download</a>
+                        <a href="{{ submission.download_url }}" class="download-url non-ajax btn btn-xs btn-default pull-right"><span class="glyphicon glyphicon-save"></span> Download</a>
                         <strong class="submission-author">{{ submission.author }}</strong><br>
                         <span class="submission-filename">{{ submission.filename }}</span><br>
                         <span class="submission-timestamp text-muted">{{ submission.timestamp }}</span>
                     </li><!-- .submission #submission-{{ submission.id }}-->
                 {% empty %}
                     <li class="submission list-group-item" id="submission-0">
-                        <span class="no-submission-message text-muted">There are no submissions yet.</span>
-                        <a href="#" class="download-url btn btn-xs btn-default pull-right hidden"><span class="glyphicon glyphicon-save"></span> Download</a>
-                        <strong class="submission-author"></strong><br>
-                        <span class="submission-filename"></span><br>
+                        <span class="no-submission-message text-muted">
+                            {% if user.is_instrcutor %}
+                                {{ can_submit|yesno:'There are no submissions yet.,No submissions have been uploaded before the deadline.' }}
+                            {% else %}
+                                {{ can_submit|yesno:'You have not uploaded a submission yet.,You did not upload a submission before the deadline.' }}
+                            {% endif %}
+                        </span>
+                        <a href="#" class="download-url non-ajax btn btn-xs btn-default pull-right hidden"><span class="glyphicon glyphicon-save"></span> Download</a>
+                        <strong class="submission-author"></strong><br class="hidden">
+                        <span class="submission-filename"></span><br class="hidden">
                         <span class="submission-timestamp text-muted"></span>
                     </li>
                 {% endfor %}
